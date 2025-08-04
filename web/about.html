@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>关于我 - Aurora的个人博客</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="preload" href="css/style.css" as="style">
+    <link rel="preload" href="js/main.js" as="script">
+</head>
+
+<body>
+    <div class="video-container">
+        <video autoplay loop muted id="bg-video">
+            <source src="videos/background.mp4" type="video/mp4">
+        </video>
+        <div class="overlay"></div>
+    </div>
+
+    <header>
+        <div class="logo">
+            <img src="images/avatar.jpg" alt="Aurora头像">
+            <h1>Aurora</h1>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="index.html">首页</a></li>
+                <li><a href="blog.html">博客</a></li>
+                <li><a href="about.html" class="active">关于我</a></li>
+                <li><a href="message.html">留言板</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="about-page">
+        <h1 class="page-title">关于我</h1>
+
+        <div class="about-content">
+            <div class="about-image">
+                <img src="images/about-me.jpg" alt="Aurora个人照片">
+            </div>
+
+            <div class="about-text">
+                <h2>你好，我是Aurora</h2>
+                <p>欢迎来到我的博客！我是一个热爱生活、喜欢探索新事物的人。这个博客是我记录生活、分享想法的地方。</p>
+
+                <p>关于我：</p>
+                <ul>
+                    <li>居住在中国的一座美丽城市</li>
+                    <li>喜欢旅行、摄影和阅读</li>
+                    <li>对技术和设计有浓厚的兴趣</li>
+                    <li>相信生活中的每一个经历都值得珍藏</li>
+                </ul>
+
+                <p>我的博客主要分享以下内容：</p>
+                <ol>
+                    <li>旅行见闻和摄影作品</li>
+                    <li>读书笔记和感悟</li>
+                    <li>技术学习和分享</li>
+                    <li>生活中的点滴思考</li>
+                </ol>
+
+                <p>希望通过这个博客，能与更多志同道合的朋友交流。如果你有任何问题或想法，欢迎随时联系我！</p>
+
+                <div class="skills-section">
+                    <h3>我的技能</h3>
+                    <div class="skills">
+                        <div class="skill-item">
+                            <div class="skill-name">摄影</div>
+                            <div class="skill-bar">
+                                <div class="skill-level" style="width: 85%;"></div>
+                            </div>
+                        </div>
+                        <div class="skill-item">
+                            <div class="skill-name">写作</div>
+                            <div class="skill-bar">
+                                <div class="skill-level" style="width: 80%;"></div>
+                            </div>
+                        </div>
+                        <div class="skill-item">
+                            <div class="skill-name">前端开发</div>
+                            <div class="skill-bar">
+                                <div class="skill-level" style="width: 75%;"></div>
+                            </div>
+                        </div>
+                        <div class="skill-item">
+                            <div class="skill-name">设计</div>
+                            <div class="skill-bar">
+                                <div class="skill-level" style="width: 70%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="contact-section">
+            <h2>联系我</h2>
+            <p>如果你有任何问题，或者只是想打个招呼，可以通过以下方式联系我：</p>
+
+            <div class="contact-methods">
+                <div class="contact-method">
+                    <i class="fas fa-envelope"></i>
+                    <h3>邮箱</h3>
+                    <p>2322640874@qq.com</p>
+                </div>
+
+                <div class="contact-method">
+                    <i class="fab fa-weixin"></i>
+                    <h3>微信</h3>
+                    <p>FFF-WCY-0528</p>
+                </div>
+
+                <div class="contact-method">
+                    <i class="fab fa-github"></i>
+                    <h3>GitHub</h3>
+                    <p>github.com/122-syf-wcy</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="social-links">
+            <a href="#"><i class="fab fa-github"></i></a>
+            <a href="#"><i class="fab fa-weixin"></i></a>
+            <a href="#"><i class="fab fa-qq"></i></a>
+        </div>
+        <p>&copy; 2025 Aurora的个人博客. 保留所有权利。</p>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/non-critical.js" defer></script>
+</body>
+
+</html>

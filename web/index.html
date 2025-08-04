@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aurora的个人博客</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js" defer></script>
+    <style>
+        /* 首页特有样式 */
+        .hero {
+            background-image: none;
+            background-size: cover;
+            background-position: center;
+            color: #333;
+            padding: 100px 20px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .hero h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        .hero p {
+            font-size: 1.2em;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .latest-articles {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .latest-articles h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .latest-articles h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background-color: #3498db;
+        }
+
+        .article-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px;
+        }
+
+        .article-card {
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .article-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .article-img {
+            height: 180px;
+            overflow: hidden;
+        }
+
+        .article-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .article-card:hover .article-img img {
+            transform: scale(1.05);
+        }
+
+        .article-content {
+            padding: 20px;
+        }
+
+        .article-content h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .article-content p {
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .article-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #999;
+            font-size: 0.8em;
+        }
+
+        .article-category {
+            background-color: #f1f1f1;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+
+        .view-all {
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .view-all a {
+            display: inline-block;
+            padding: 10px 25px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .view-all a:hover {
+            background-color: #2980b9;
+        }
+
+        .latest-posts {
+            padding: 40px 0;
+        }
+
+        .latest-posts h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+            font-size: 2em;
+        }
+
+        .posts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .post-card {
+            background-color: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .post-card:hover {
+            transform: translateY(-10px);
+        }
+
+        .post-image {
+            height: 180px;
+            overflow: hidden;
+            position: relative;
+            background-color: #f5f5f5;
+        }
+
+        .post-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: transform 0.3s ease;
+        }
+
+        .post-image.data-url-image {
+            background-size: cover;
+            background-position: center;
+        }
+
+        .post-image.data-url-image img {
+            opacity: 0;
+        }
+
+        .post-card:hover .post-image img {
+            transform: scale(1.05);
+        }
+
+        .post-content {
+            padding: 20px;
+        }
+
+        .post-content h3 {
+            margin: 0 0 10px;
+            font-size: 1.4em;
+            color: #333;
+        }
+
+        .post-date {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .post-excerpt {
+            color: #555;
+            margin-bottom: 15px;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .read-more {
+            display: inline-block;
+            color: #3498db;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .read-more:hover {
+            text-decoration: underline;
+        }
+
+        .view-all {
+            display: block;
+            width: 200px;
+            margin: 0 auto;
+            padding: 12px 0;
+            background-color: #3498db;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        .view-all:hover {
+            background-color: #2980b9;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .error-message {
+            text-align: center;
+            padding: 20px;
+            color: #e74c3c;
+        }
+
+        .no-articles {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .post-category,
+        .post-tag {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            margin-right: 5px;
+            font-size: 0.8em;
+            margin-bottom: 10px;
+        }
+
+        .post-category {
+            background-color: #e1f5fe;
+            color: #0288d1;
+        }
+
+        .post-tag {
+            background-color: #f1f8e9;
+            color: #558b2f;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="video-container">
+        <video autoplay loop muted id="bg-video" preload="auto">
+            <source src="videos/background-preview.mp4" type="video/mp4" id="video-source">
+        </video>
+        <div class="overlay"></div>
+    </div>
+
+    <header>
+        <div class="logo">
+            <img src="images/avatar.jpg" alt="Aurora头像">
+            <h1>Aurora</h1>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="index.html" class="active">首页</a></li>
+                <li><a href="blog.html">博客</a></li>
+                <li><a href="about.html">关于我</a></li>
+                <li><a href="message.html">留言板</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="profile">
+                <div class="transparent-image-container">
+                    <img src="images/profile.jpg" alt="Aurora形象照"
+                        style="background: transparent; border: none; box-shadow: none;" loading="lazy">
+                </div>
+                <div class="quote">
+                    <h2>冬思韦</h2>
+                    <p>欢迎来到我的博客空间，这里记录我的思考与成长。</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="latest-posts">
+            <h2>最新文章</h2>
+
+            <div id="articles-loading" class="loading">
+                <i class="fas fa-spinner fa-spin"></i> 正在加载文章...
+            </div>
+
+            <div id="articles-error" class="error-message" style="display: none;">
+                文章加载失败，请稍后重试
+            </div>
+
+            <div id="no-articles" class="no-articles" style="display: none;">
+                暂无文章，敬请期待
+            </div>
+
+            <div id="posts-grid" class="posts-grid" style="display: none;">
+                <!-- 文章列表将通过JavaScript动态加载 -->
+            </div>
+
+            <a href="blog.html" class="view-all">查看全部文章</a>
+        </section>
+    </main>
+
+    <footer>
+        <div class="social-links">
+            <a href="#"><i class="fab fa-github"></i></a>
+            <a href="#"><i class="fab fa-weixin"></i></a>
+            <a href="#"><i class="fab fa-qq"></i></a>
+        </div>
+        <p>&copy; 2025 Aurora的个人博客. 保留所有权利。</p>
+    </footer>
+
+    <script>
+        // 定义API服务器地址
+        const API_URL = 'https://rjjgamicpk.hzh.sealos.run/article';
+
+        // DOM加载完成后执行
+        document.addEventListener('DOMContentLoaded', function () {
+            // 异步加载背景视频
+            const bgVideo = document.getElementById('bg-video');
+            if (bgVideo) {
+                // 先使用预览版本
+                bgVideo.addEventListener('loadeddata', function () {
+                    // 视频预览版本加载完成，页面可见
+                    document.body.classList.add('video-loaded');
+                });
+
+                // 页面内容加载完成后，替换为高质量版本
+                window.addEventListener('load', function () {
+                    setTimeout(() => {
+                        const videoSource = document.getElementById('video-source');
+                        if (videoSource) {
+                            // 确认是否有压缩版本，如果有则加载压缩版，否则加载原始版本
+                            const xhr = new XMLHttpRequest();
+                            xhr.open('HEAD', 'videos/background-compressed.mp4', true);
+                            xhr.onload = function () {
+                                if (xhr.status === 200) {
+                                    console.log('加载压缩版视频');
+                                    videoSource.setAttribute('src', 'videos/background-compressed.mp4');
+                                } else {
+                                    console.log('加载原始视频');
+                                    videoSource.setAttribute('src', 'videos/background.mp4');
+                                }
+                                bgVideo.load();
+                                bgVideo.play().catch(err => console.warn('视频播放失败:', err));
+                            };
+                            xhr.onerror = function () {
+                                console.log('检查压缩视频失败，加载原始视频');
+                                videoSource.setAttribute('src', 'videos/background.mp4');
+                                bgVideo.load();
+                                bgVideo.play().catch(err => console.warn('视频播放失败:', err));
+                            };
+                            xhr.send();
+                        }
+                    }, 1000); // 延迟1秒加载高质量版本，确保不影响页面内容的加载
+                });
+            }
+
+            // 加载最新文章
+            loadLatestArticles();
+        });
+
+        // 加载最新文章
+        function loadLatestArticles() {
+            // 显示加载中
+            document.getElementById('articles-loading').style.display = 'block';
+            document.getElementById('articles-error').style.display = 'none';
+            document.getElementById('no-articles').style.display = 'none';
+            document.getElementById('posts-grid').style.display = 'none';
+
+            // 请求最新文章
+            axios.post(API_URL, {
+                action: 'list',
+                page: 1,
+                size: 4 // 首页只显示4篇最新文章
+            }, {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(function (response) {
+                    if (response.data.ok && response.data.data) {
+                        renderLatestArticles(response.data.data.list);
+                    } else {
+                        showError(response.data.error || '加载文章失败');
+                    }
+                })
+                .catch(function (error) {
+                    console.error('加载文章列表失败:', error);
+                    showError('加载文章失败: ' + (error.response?.data?.error || error.message));
+                });
+        }
+
+        // 渲染最新文章
+        function renderLatestArticles(articles) {
+            // 隐藏加载中
+            document.getElementById('articles-loading').style.display = 'none';
+
+            if (!articles || articles.length === 0) {
+                document.getElementById('no-articles').style.display = 'block';
+                return;
+            }
+
+            const postsGrid = document.getElementById('posts-grid');
+            postsGrid.innerHTML = '';
+            postsGrid.style.display = 'grid';
+
+            // 渲染每篇文章
+            articles.forEach(article => {
+                const postCard = document.createElement('article');
+                postCard.className = 'post-card';
+                postCard.setAttribute('data-id', article._id);
+                postCard.style.cursor = 'pointer';
+                postCard.onclick = function() {
+                    window.location.href = 'article.html?id=' + encodeURIComponent(article._id);
+                };
+
+                // 格式化日期
+                const createdAt = new Date(article.createdAt);
+                const formattedDate = `${createdAt.getFullYear()}年${(createdAt.getMonth() + 1)}月${createdAt.getDate()}日`;
+
+                // 格式化分类
+                const categoryHtml = article.category ?
+                    `<span class="post-category">${article.category}</span>` : '';
+
+                // 格式化标签
+                let tagsHtml = '';
+                if (article.tags && article.tags.length > 0) {
+                    // 最多显示2个标签
+                    const displayTags = article.tags.slice(0, 2);
+                    displayTags.forEach(tag => {
+                        tagsHtml += `<span class="post-tag">${tag}</span>`;
+                    });
+                }
+
+                // 处理文章摘要，去除Markdown格式
+                let excerpt = article.content || '';
+                excerpt = excerpt.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, ''); // 移除Markdown图片链接
+                excerpt = excerpt.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1'); // 移除Markdown链接
+                excerpt = excerpt.replace(/#{1,6}\s+/g, ''); // 标题
+                excerpt = excerpt.replace(/\*\*([^*]+)\*\*/g, '$1'); // 粗体
+                excerpt = excerpt.replace(/\*([^*]+)\*/g, '$1'); // 斜体
+                excerpt = excerpt.replace(/`([^`]+)`/g, '$1'); // 代码
+
+                // 限制摘要长度
+                if (excerpt.length > 100) {
+                    excerpt = excerpt.substring(0, 100) + '...';
+                }
+
+                            // 获取封面图片URL
+            let coverImage = 'images/post-default.jpg'; // 默认封面图
+            let coverImageType = 'normal'; // 图片类型：normal 或 dataURL
+
+            try {
+                if (article.content) {
+                    // 检查内容是否为字符串
+                    const content = typeof article.content === 'string' 
+                        ? article.content 
+                        : String(article.content || '');
+                        
+                    // 安全提取图片URL
+                    const extractedImg = extractCoverImageFromContent(content);
+                    
+                    if (extractedImg) {
+                        // 检查是否是本地文件路径，如果是就使用默认图片
+                        if (extractedImg.startsWith('file://') || extractedImg.match(/^[a-zA-Z]:\\/)) {
+                            // 使用默认图片
+                        } 
+                        // 处理Data URL
+                        else if (extractedImg.startsWith('data:')) {
+                            try {
+                                coverImageType = 'dataURL';
+                                // 创建一个临时元素来存储编码后的图片URL
+                                const tempImg = document.createElement('img');
+                                tempImg.style.display = 'none';
+                                tempImg.src = extractedImg;
+                                document.body.appendChild(tempImg);
+    
+                                // 获取对图片的引用，稍后我们会使用它
+                                coverImage = tempImg;
+                            } catch (imgErr) {
+                                console.error('处理Data URL图片失败:', imgErr);
+                                // 失败时使用默认图片
+                            }
+                        } else {
+                            coverImage = extractedImg;
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('获取文章封面图片时出错:', error);
+                // 使用默认图片
+            }
+
+                // 创建文章卡片的HTML
+                postCard.innerHTML = `
+                    <div class="post-image">
+                        <img src="${coverImageType === 'normal' ? coverImage : 'images/post-default.jpg'}" 
+                             alt="${article.title}" 
+                             referrerpolicy="no-referrer" 
+                             loading="lazy"
+                             onerror="this.src='images/post-default.jpg';">
+                    </div>
+                    <div class="post-content">
+                        <h3>${article.title}</h3>
+                        <p class="post-date">${formattedDate}</p>
+                        <div>
+                            ${categoryHtml}
+                            ${tagsHtml}
+                        </div>
+                        <p class="post-excerpt">${excerpt}</p>
+                        <a href="javascript:void(0)" onclick="window.location.href='article.html?id='+encodeURIComponent('${article._id}')" class="read-more">阅读更多</a>
+                    </div>
+                `;
+
+                // 添加到容器中
+                postsGrid.appendChild(postCard);
+
+                // 如果是Data URL格式图片，特殊处理
+                if (coverImageType === 'dataURL') {
+                    const imgContainer = postCard.querySelector('.post-image');
+                    if (imgContainer && coverImage instanceof HTMLImageElement) {
+                        // 直接使用背景图而不是创建新元素，减少DOM操作
+                        if (coverImage.src) {
+                            imgContainer.style.backgroundImage = `url(${coverImage.src})`;
+                            imgContainer.style.backgroundSize = 'cover';
+                            imgContainer.style.backgroundPosition = 'center';
+                            const img = postCard.querySelector('.post-image img');
+                            if (img) img.style.opacity = '0';
+
+                            // 立即清理临时图片元素
+                            if (coverImage.parentNode) {
+                                document.body.removeChild(coverImage);
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 从文章内容提取封面图片URL
+        function extractCoverImageFromContent(content) {
+            if (!content) return null;
+
+            try {
+                // 使用正则表达式查找Markdown格式的图片链接
+                const imgRegex = /!\[([^\]]*)\]\(([^)]+)\)/;
+                const match = content.match(imgRegex);
+
+                if (match && match[2]) {
+                    let imgUrl = match[2];
+                    console.log('提取到封面图类型:', imgUrl.startsWith('data:') ? 'Data URL' : '普通URL');
+
+                    // 如果是百度图片，使用代理
+                    if (imgUrl.includes('baidu.com')) {
+                        imgUrl = `https://images.weserv.nl/?url=${encodeURIComponent(imgUrl)}`;
+                    }
+
+                    return imgUrl;
+                }
+            } catch (err) {
+                console.error('提取图片URL时出错:', err);
+            }
+
+            return null;
+        }
+
+        // 显示错误信息
+        function showError(message) {
+            document.getElementById('articles-loading').style.display = 'none';
+
+            const errorElement = document.getElementById('articles-error');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+    </script>
+    <script src="js/main.js"></script>
+</body>
+
+</html>

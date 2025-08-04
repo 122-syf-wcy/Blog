@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>百度图片链接使用指南 - Aurora的个人博客</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .guide-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .guide-title {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .guide-section {
+            margin-bottom: 30px;
+        }
+
+        .guide-section h2 {
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+            margin-bottom: 15px;
+        }
+
+        .step {
+            margin-bottom: 20px;
+            padding-left: 20px;
+        }
+
+        .step-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2980b9;
+        }
+
+        .step-content {
+            line-height: 1.6;
+        }
+
+        .caution {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .caution-title {
+            color: #856404;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .code-block {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+            border-left: 4px solid #3498db;
+        }
+
+        .tip {
+            background-color: #e8f4f8;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .tip-title {
+            color: #17a2b8;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .image-example {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .image-example img {
+            max-width: 100%;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .image-example code {
+            display: block;
+            background-color: #f1f1f1;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+            text-align: left;
+            font-family: monospace;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="logo">
+            <a href="index.html">Aurora的个人博客</a>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="index.html">首页</a></li>
+                <li><a href="blog.html">博客</a></li>
+                <li><a href="about.html">关于我</a></li>
+                <li><a href="message.html">留言板</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="guide-container">
+        <h1 class="guide-title">百度图片链接使用指南</h1>
+
+        <div class="guide-section">
+            <h2>为什么需要这个指南？</h2>
+            <p>百度图片链接包含大量复杂参数，在Markdown编辑器中使用时容易出现问题。本指南将教您如何正确复制和使用百度图片链接，
+                确保图片能够在博客文章中正常显示。</p>
+        </div>
+
+        <div class="guide-section">
+            <h2>百度图片链接正确使用步骤</h2>
+
+            <div class="step">
+                <div class="step-title">第一步：在百度图片中查找您需要的图片</div>
+                <div class="step-content">
+                    <p>打开百度图片搜索页面，输入关键词查找您需要的图片。点击图片，在右侧预览界面中可以看到大图。</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">第二步：获取图片链接</div>
+                <div class="step-content">
+                    <p>在图片上点击右键，选择"复制图片地址"或"复制图片链接"（不同浏览器可能略有不同）。</p>
+                    <div class="tip">
+                        <div class="tip-title"><i class="fas fa-lightbulb"></i> 提示</div>
+                        <p>确保复制的是完整的图片链接，而不是图片本身。链接通常以http://或https://开头。</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">第三步：在Markdown编辑器中使用图片链接</div>
+                <div class="step-content">
+                    <p>在Markdown编辑器中，使用以下格式插入图片：</p>
+                    <div class="code-block">
+                        ![图片描述](这里粘贴百度图片链接)
+                    </div>
+                    <p>例如：</p>
+                    <div class="code-block">
+                        ![美丽风景](https://img1.baidu.com/it/u=2823894180,3464366841&fm=253&fmt=auto&app=120&f=JPEG?w=800&h=800)
+                    </div>
+
+                    <div class="caution">
+                        <div class="caution-title"><i class="fas fa-exclamation-triangle"></i> 重要提示</div>
+                        <ul>
+                            <li><strong>不要修改链接中的任何字符</strong>，包括问号、等号、&符号等。</li>
+                            <li>百度图片链接通常较长且包含多个参数，请完整复制。</li>
+                            <li>不要对链接进行额外的编码或解码。</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="guide-section">
+            <h2>常见问题解决</h2>
+
+            <div class="step">
+                <div class="step-title">图片显示为"加载失败"</div>
+                <div class="step-content">
+                    <p>如果您的图片显示为"加载失败"，可能的原因和解决方案：</p>
+                    <ul>
+                        <li>图片链接复制不完整 - 请重新复制完整的链接</li>
+                        <li>图片链接中的特殊字符被错误处理 - 确保不修改原始链接</li>
+                        <li>图片服务器访问限制 - 尝试使用其他图片源</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">链接中的特殊字符</div>
+                <div class="step-content">
+                    <p>百度图片链接中常包含的特殊字符（如&, =, ?）在Markdown中都是有效的，不需要进行特殊处理。直接粘贴完整链接即可。</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="guide-section">
+            <h2>示例展示</h2>
+            <p>下面是正确使用图片链接的效果展示：</p>
+
+            <div class="image-example">
+                <img src="images/avatar.jpg" alt="示例图片">
+                <code>![示例图片](images/avatar.jpg)</code>
+            </div>
+        </div>
+
+        <div class="guide-section">
+            <h2>小技巧</h2>
+            <div class="tip">
+                <div class="tip-title"><i class="fas fa-lightbulb"></i> 如何选择合适的图片</div>
+                <ul>
+                    <li>尽量选择大小适中的图片，过大的图片可能会影响页面加载速度。</li>
+                    <li>注意图片版权问题，建议使用免费商用图片或标明出处。</li>
+                    <li>为图片添加有意义的描述文字，有助于搜索引擎索引和无障碍访问。</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="guide-section">
+            <h2>百度图片链接无法显示的原因</h2>
+
+            <div class="caution">
+                <div class="caution-title"><i class="fas fa-exclamation-triangle"></i> 重要提示</div>
+                <p>百度图片有严格的防盗链机制，直接复制的百度图片链接在一般情况下<strong>无法</strong>在其他网站上正常显示。</p>
+            </div>
+
+            <p>百度图片会检查图片请求的来源(HTTP Referrer)。如果发现请求不是来自百度自己的网站，就会拒绝显示图片，导致"图片加载失败"的错误。</p>
+
+            <div class="tip">
+                <div class="tip-title"><i class="fas fa-lightbulb"></i> 好消息</div>
+                <p>本博客已经解决了百度图片防盗链问题！您可以直接复制百度图片链接使用，无需任何特殊处理。</p>
+            </div>
+        </div>
+
+        <div class="guide-section">
+            <h2>使用百度图片的步骤</h2>
+
+            <div class="step">
+                <div class="step-title">第一步：在百度图片中查找您需要的图片</div>
+                <div class="step-content">
+                    <p>打开百度图片搜索页面，输入关键词查找您需要的图片。点击图片，在右侧预览界面中可以看到大图。</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">第二步：获取图片链接</div>
+                <div class="step-content">
+                    <p>在图片上点击右键，选择"复制图片地址"或"复制图片链接"（不同浏览器可能略有不同）。</p>
+                    <div class="tip">
+                        <div class="tip-title"><i class="fas fa-lightbulb"></i> 提示</div>
+                        <p>确保复制的是完整的图片链接，而不是图片本身。链接通常以http://或https://开头。</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">第三步：在文章编辑器中插入图片</div>
+                <div class="step-content">
+                    <p>在文章编辑界面，点击工具栏中的图片按钮<i class="fa fa-picture-o"></i>，在弹出的对话框中粘贴您复制的百度图片链接，然后点击"插入"按钮。</p>
+                    <p>系统会自动处理防盗链问题，确保图片能正常显示。</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="guide-section">
+            <h2>技术说明：我们如何解决百度图片防盗链</h2>
+
+            <p>本博客采用了以下技术手段解决百度图片防盗链问题：</p>
+
+            <ol>
+                <li><strong>设置referrer策略</strong>：通过设置<code>referrerpolicy="no-referrer"</code>属性，确保访问图片时不发送来源信息，从而绕过百度的防盗链检测。
+                </li>
+                <li><strong>全局meta标签</strong>：在页面中添加<code>&lt;meta name="referrer" content="no-referrer"&gt;</code>，控制整个页面的referrer策略。
+                </li>
+                <li><strong>图片代理服务</strong>：使用<a href="https://images.weserv.nl/"
+                        target="_blank">Weserv.nl</a>作为图片代理，当图片无法直接显示时，自动通过代理服务器获取图片。</li>
+                <li><strong>自动回退机制</strong>：当图片加载失败时，系统会自动尝试使用代理方式重新加载，确保图片能够正常显示。</li>
+            </ol>
+
+            <p>这些技术措施组合使用，确保了您可以直接使用百度图片链接，无需额外的处理步骤。</p>
+
+            <div class="tip">
+                <div class="tip-title"><i class="fas fa-lightbulb"></i> 技术小贴士</div>
+                <p>即使在极少数情况下第一种方法失效，我们的多重备份机制也能确保图片最终显示出来。这是目前最可靠的百度图片防盗链解决方案。</p>
+            </div>
+        </div>
+
+        <div class="guide-section">
+            <h2>推荐解决方案</h2>
+
+            <ol>
+                <li><strong>使用百度图片</strong>：
+                    <p>百度图片是一个强大的图片资源库，本博客已经解决了百度图片防盗链问题，您可以直接使用百度图片链接。</p>
+                    <div class="tip">
+                        <div class="tip-title"><i class="fas fa-lightbulb"></i> 提示</div>
+                        <p>使用百度图片是最简单的方法，无需下载或上传图片，直接复制链接即可使用。</p>
+                    </div>
+                </li>
+            </ol>
+        </div>
+
+        <div class="guide-section">
+            <h2>使用博客图片上传功能的步骤</h2>
+
+            <div class="step">
+                <div class="step-title">第一步：在文章编辑界面点击图片按钮</div>
+                <div class="step-content">
+                    <p>在Markdown编辑器工具栏中，找到并点击图片按钮<i class="fa fa-picture-o"></i>。这将打开图片管理器窗口。</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">第二步：上传新图片</div>
+                <div class="step-content">
+                    <p>在图片管理器中，点击"选择文件"按钮，从您的设备中选择要上传的图片，然后点击"上传图片"按钮。</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">第三步：选择图片插入文章</div>
+                <div class="step-content">
+                    <p>上传成功后，您可以在图片库中看到所有已上传的图片。点击图片下方的"选择"按钮，图片将自动插入到您的文章中。</p>
+                    <div class="tip">
+                        <div class="tip-title"><i class="fas fa-lightbulb"></i> 提示</div>
+                        <p>您也可以点击"复制链接"或"Markdown"按钮，手动复制图片链接或Markdown代码。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        <p>&copy; 2023 Aurora的个人博客. 保留所有权利.</p>
+    </footer>
+</body>
+
+</html>

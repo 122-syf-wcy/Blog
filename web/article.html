@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <title>文章详情 - Aurora的个人博客</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- 引入Markdown渲染库 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css/github-markdown.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- 引入Mermaid图表支持 -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            background: transparent;
+        }
+
+        .article-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .article-header {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .article-title {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .article-meta {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+        }
+
+        .article-meta span {
+            margin-right: 15px;
+        }
+
+        .article-meta i {
+            margin-right: 5px;
+        }
+
+        .article-category,
+        .article-tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 3px;
+            margin-right: 5px;
+            font-size: 0.85em;
+        }
+
+        .article-category {
+            background-color: #e1f5fe;
+            color: #0288d1;
+        }
+
+        .article-tag {
+            background-color: #f1f8e9;
+            color: #558b2f;
+        }
+
+        .article-content {
+            line-height: 1.8;
+            color: #333;
+            padding: 20px 0;
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* Markdown样式 */
+        .markdown-body {
+            box-sizing: border-box;
+            min-width: 200px;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 8px;
+        }
+
+        .markdown-body img {
+            max-width: 100%;
+        }
+
+        .article-footer {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .article-nav {
+            flex: 1;
+        }
+
+        .article-nav-prev {
+            text-align: left;
+        }
+
+        .article-nav-next {
+            text-align: right;
+        }
+
+        .article-nav a {
+            display: block;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: #333;
+            background-color: rgba(255, 255, 255, 0.6);
+        }
+
+        .article-nav a:hover {
+            background-color: rgba(249, 249, 249, 0.9);
+            border-color: #ddd;
+        }
+
+        .article-nav-label {
+            display: block;
+            font-size: 0.9em;
+            color: #999;
+            margin-bottom: 5px;
+        }
+
+        .article-nav-title {
+            font-size: 1.1em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2em;
+            color: #666;
+        }
+
+        .error-message {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2em;
+            color: #e74c3c;
+        }
+
+        /* 错误图片占位符样式 */
+        .img-error-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 150px;
+            border: 1px dashed #ddd;
+            background-color: rgba(248, 248, 248, 0.8);
+            color: #e74c3c;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+
+        /* 图片预览覆盖层 */
+        .image-preview-overlay {
+            backdrop-filter: blur(5px);
+        }
+
+        /* 文章目录容器 */
+        #article-toc-container {
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        /* Mermaid图表样式 */
+        .mermaid {
+            margin: 20px auto;
+            overflow: auto;
+            text-align: center;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        /* 资源推荐盒子样式 */
+        .resource-box {
+            background-color: rgba(245, 247, 250, 0.85);
+            border-left: 4px solid #4a89dc;
+            padding: 15px 20px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .resource-box h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="video-container">
+        <video autoplay loop muted id="bg-video">
+            <source src="videos/background.mp4" type="video/mp4">
+        </video>
+        <div class="overlay"></div>
+    </div>
+
+    <header>
+        <div class="logo">
+            <img src="images/avatar.jpg" alt="Aurora头像">
+            <h1>Aurora</h1>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="index.html">首页</a></li>
+                <li><a href="blog.html">博客</a></li>
+                <li><a href="about.html">关于我</a></li>
+                <li><a href="message.html">留言板</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="article-container">
+        <div id="article-loading" class="loading">
+            <i class="fas fa-spinner fa-spin"></i> 正在加载文章...
+        </div>
+
+        <div id="article-error" class="error-message" style="display: none;">
+            文章加载失败，请稍后重试
+        </div>
+
+        <article id="article-content" style="display: none;">
+            <div class="article-header">
+                <h1 class="article-title" id="title"></h1>
+                <div class="article-meta">
+                    <span><i class="far fa-calendar-alt"></i> <span id="date"></span></span>
+                    <span><i class="far fa-eye"></i> <span id="views"></span> 阅读</span>
+                    <span><i class="far fa-folder"></i> <span id="category"></span></span>
+                    <div id="tags"></div>
+                </div>
+            </div>
+
+            <div id="article-toc-container" style="display: none;">
+                <h3>目录</h3>
+                <div id="article-toc"></div>
+            </div>
+
+            <div class="article-content markdown-body" id="content">
+                <!-- 文章内容将通过JavaScript动态加载 -->
+            </div>
+
+            <div class="article-footer">
+                <div class="article-nav article-nav-prev">
+                    <!-- 上一篇文章链接将通过JavaScript动态加载 -->
+                </div>
+                <div class="article-nav article-nav-next">
+                    <!-- 下一篇文章链接将通过JavaScript动态加载 -->
+                </div>
+            </div>
+        </article>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Aurora的个人博客. 保留所有权利.</p>
+    </footer>
+
+    <script>
+        // 定义API服务器地址
+        const API_URL = 'https://rjjgamicpk.hzh.sealos.run/article';
+
+        // DOM加载完成后执行
+        document.addEventListener('DOMContentLoaded', function () {
+            // 初始化Mermaid图表
+            mermaid.initialize({
+                startOnLoad: false, // 我们将手动渲染
+                theme: 'default',
+                securityLevel: 'loose',
+                flowchart: { useMaxWidth: true, htmlLabels: true }
+            });
+
+            // 获取文章ID
+            console.log('原始URL查询字符串:', window.location.search);
+            const urlParams = new URLSearchParams(window.location.search);
+            const articleId = urlParams.get('id');
+            console.log('解析得到的文章ID:', articleId);
+
+            if (!articleId) {
+                showError('未找到文章ID，请返回博客首页。');
+                return;
+            }
+
+            // 加载文章详情
+            loadArticle(articleId);
+        });
+
+        // 加载文章详情
+        function loadArticle(articleId) {
+            // 显示加载中
+            document.getElementById('article-loading').style.display = 'flex';
+            document.getElementById('article-content').style.display = 'none';
+            document.getElementById('article-error').style.display = 'none';
+            
+            // 调试信息
+            console.log('正在请求文章ID:', articleId);
+
+            axios.post(API_URL, {
+                action: 'get',
+                id: articleId
+            }, {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(function (response) {
+                    if (response.data.ok && response.data.data) {
+                        renderArticle(response.data.data);
+                    } else {
+                        showError(response.data.error || '加载文章失败');
+                    }
+                })
+                .catch(function (error) {
+                    console.error('加载文章详情完整错误:', error);
+                    console.error('响应数据:', error.response?.data);
+                    showError('加载文章失败: ' + (error.response?.data?.error || error.message));
+                });
+        }
+
+        // 渲染文章详情
+        function renderArticle(article) {
+            try {
+                console.log('开始渲染文章:', article.title);
+                
+                // 隐藏加载中
+                document.getElementById('article-loading').style.display = 'none';
+                document.getElementById('article-content').style.display = 'block';
+
+            // 设置页面标题
+            document.title = `${article.title} - Aurora的个人博客`;
+
+            // 填充文章内容
+            document.getElementById('title').textContent = article.title;
+
+            // 处理文章创建时间
+            const createdDate = new Date(article.createdAt);
+            const formattedDate = `${createdDate.getFullYear()}-${(createdDate.getMonth() + 1).toString().padStart(2, '0')}-${createdDate.getDate().toString().padStart(2, '0')}`;
+            document.getElementById('date').textContent = formattedDate;
+
+            // 添加阅读量
+            document.getElementById('views').textContent = article.views || 0;
+
+            // 处理文章分类
+            const categoryElement = document.getElementById('category');
+            if (article.category) {
+                categoryElement.textContent = article.category;
+                categoryElement.style.display = 'inline-block';
+            } else {
+                categoryElement.style.display = 'none';
+            }
+
+            // 处理文章标签
+            const tagsContainer = document.getElementById('tags');
+            tagsContainer.innerHTML = '';
+            if (article.tags && article.tags.length > 0) {
+                article.tags.forEach(tag => {
+                    const tagSpan = document.createElement('span');
+                    tagSpan.className = 'article-tag';
+                    tagSpan.textContent = tag;
+                    tagsContainer.appendChild(tagSpan);
+                });
+            }
+
+            // 处理文章内容（Markdown转HTML）
+            const contentElement = document.getElementById('content');
+
+            // 确保内容存在
+            if (!article.content) {
+                contentElement.innerHTML = '<p class="no-content">暂无内容</p>';
+                return;
+            }
+
+            // 处理Data URL图片嵌入的替代方案
+            let processedContent = article.content || '';
+            
+            // 安全检查
+            if (typeof processedContent !== 'string') {
+                console.error('文章内容不是字符串类型:', typeof processedContent);
+                processedContent = String(processedContent);
+            }
+
+            // 移除可能导致安全问题的本地文件引用
+            processedContent = processedContent.replace(/file:\/\/\//g, 'https://blocked-local-file-access/');
+            
+            // 处理图片标记
+            processedContent = processedContent.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, src) => {
+                // 如果是本地文件路径，替换为占位符
+                if (src.startsWith('file://') || src.match(/^[a-zA-Z]:\\/)) {
+                    return `![${alt}](images/post-default.jpg)`;
+                }
+                
+                // 如果图片链接很长（可能是Data URL），就生成一个唯一标识符
+                if (src.length > 100) {
+                    const imageId = 'img-' + Math.random().toString(36).substring(2, 10);
+                    // 存储Data URL以供后续使用
+                    window.dataUrlImages = window.dataUrlImages || {};
+                    window.dataUrlImages[imageId] = src;
+                    // 返回带标识符的图片标记
+                    return `![${alt}](data-url-id:${imageId})`;
+                }
+                return match;
+            });
+
+            // 使用marked.js渲染Markdown，配置为允许HTML
+            marked.setOptions({
+                renderer: new marked.Renderer(),
+                gfm: true,
+                breaks: true,
+                sanitize: false, // 关键：设置为false以允许HTML标签
+                smartLists: true,
+                smartypants: false,
+                xhtml: false
+            });
+            const renderedContent = marked.parse(processedContent);
+            contentElement.innerHTML = renderedContent;
+
+            // 手动渲染 Mermaid 图表
+            try {
+                const mermaidElements = contentElement.querySelectorAll('.language-mermaid');
+                mermaidElements.forEach((element, index) => {
+                    const mermaidContainer = document.createElement('div');
+                    mermaidContainer.id = `mermaid-chart-${index}`;
+                    mermaidContainer.className = 'mermaid';
+                    mermaidContainer.textContent = element.textContent;
+                    element.parentNode.replaceWith(mermaidContainer);
+                });
+                mermaid.run({
+                    nodes: document.querySelectorAll('.mermaid')
+                });
+            } catch (e) {
+                console.error("Mermaid 渲染失败:", e);
+            }
+
+            // 处理渲染后的内容中的所有图片
+            const images = contentElement.querySelectorAll('img');
+            images.forEach(img => {
+                // 检查是否是我们标记的Data URL图片
+                if (img.src.startsWith('data-url-id:')) {
+                    const imageId = img.src.replace('data-url-id:', '');
+                    if (window.dataUrlImages && window.dataUrlImages[imageId]) {
+                        // 使用DIV + 背景图片方式替代
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'data-url-image-wrapper';
+                        wrapper.style.width = '100%';
+                        wrapper.style.maxWidth = '800px';
+                        wrapper.style.margin = '1rem auto';
+                        wrapper.style.backgroundImage = `url(${window.dataUrlImages[imageId]})`;
+                        wrapper.style.backgroundSize = 'contain';
+                        wrapper.style.backgroundPosition = 'center';
+                        wrapper.style.backgroundRepeat = 'no-repeat';
+                        wrapper.style.minHeight = '300px';
+
+                        // 替换图片元素
+                        img.parentNode.replaceChild(wrapper, img);
+
+                        // 为背景图片添加点击查看大图功能
+                        wrapper.style.cursor = 'pointer';
+                        wrapper.addEventListener('click', function () {
+                            showImagePreview(window.dataUrlImages[imageId], '');
+                        });
+                    } else {
+                        // 如果找不到对应的Data URL，显示错误信息
+                        img.src = 'images/post-default.jpg';
+                        img.alt = '图片加载失败';
+                    }
+                } else {
+                    // 普通图片处理
+                    img.onerror = function () {
+                        this.src = 'images/post-default.jpg';
+                        this.alt = '图片加载失败';
+                    };
+
+                    // 为普通图片添加预览功能
+                    img.style.cursor = 'pointer';
+                    img.onclick = function () {
+                        showImagePreview(this.src, this.alt);
+                    };
+                }
+            });
+
+            // 为代码块添加语法高亮
+            if (window.hljs) {
+                document.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightBlock(block);
+                });
+            }
+
+            // 添加TOC (Table of Contents)
+            generateTOC();
+
+            // 更新阅读量
+            updateArticleViews(article._id);
+            
+            } catch (err) {
+                console.error('渲染文章时发生错误:', err);
+                showError('渲染文章时发生错误: ' + err.message);
+            }
+        }
+
+        // 生成目录
+        function generateTOC() {
+            const contentElement = document.getElementById('content');
+            const tocContainer = document.getElementById('article-toc');
+            tocContainer.innerHTML = '';
+
+            // 获取所有标题元素
+            const headings = contentElement.querySelectorAll('h1, h2, h3, h4, h5, h6');
+
+            // 如果没有标题，则隐藏TOC
+            if (headings.length === 0) {
+                document.getElementById('article-toc-container').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('article-toc-container').style.display = 'block';
+
+            // 创建目录项
+            const tocList = document.createElement('ul');
+            headings.forEach((heading, index) => {
+                // 为标题添加ID，用于锚点链接
+                const headingId = `heading-${index}`;
+                heading.id = headingId;
+
+                // 创建目录项
+                const listItem = document.createElement('li');
+                listItem.className = `toc-level-${heading.tagName.toLowerCase()}`;
+
+                const link = document.createElement('a');
+                link.href = `#${headingId}`;
+                link.textContent = heading.textContent;
+
+                // 点击目录项时滚动到对应位置
+                link.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(`#${headingId}`).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+
+                listItem.appendChild(link);
+                tocList.appendChild(listItem);
+            });
+
+            tocContainer.appendChild(tocList);
+        }
+
+        // 显示图片预览
+        function showImagePreview(src, alt) {
+            const overlay = document.createElement('div');
+            overlay.className = 'image-preview-overlay';
+            overlay.style.position = 'fixed';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100%';
+            overlay.style.height = '100%';
+            overlay.style.backgroundColor = 'rgba(0,0,0,0.8)';
+            overlay.style.zIndex = '9999';
+            overlay.style.display = 'flex';
+            overlay.style.justifyContent = 'center';
+            overlay.style.alignItems = 'center';
+
+            // 处理Data URL图片
+            if (src.startsWith('data:')) {
+                const wrapper = document.createElement('div');
+                wrapper.style.position = 'relative';
+                wrapper.style.maxWidth = '90%';
+                wrapper.style.maxHeight = '90%';
+                wrapper.style.backgroundSize = 'contain';
+                wrapper.style.backgroundPosition = 'center';
+                wrapper.style.backgroundRepeat = 'no-repeat';
+                wrapper.style.backgroundImage = `url(${src})`;
+                wrapper.style.width = '800px';
+                wrapper.style.height = '600px';
+
+                overlay.appendChild(wrapper);
+            } else {
+                const img = document.createElement('img');
+                img.src = src;
+                img.alt = alt || '';
+                img.style.maxWidth = '90%';
+                img.style.maxHeight = '90%';
+                img.style.objectFit = 'contain';
+
+                overlay.appendChild(img);
+            }
+
+            // 点击关闭预览
+            overlay.addEventListener('click', function () {
+                document.body.removeChild(overlay);
+            });
+
+            document.body.appendChild(overlay);
+        }
+
+        // 更新文章阅读量
+        function updateArticleViews(articleId) {
+            axios.post(API_URL, {
+                action: 'view',
+                id: articleId
+            }, {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(function (response) {
+                    if (response.data.ok) {
+                        console.log('文章阅读量更新成功');
+                    }
+                })
+                .catch(function (error) {
+                    console.error('更新阅读量失败:', error);
+                });
+        }
+
+        // 显示错误信息
+        function showError(message) {
+            document.getElementById('article-loading').style.display = 'none';
+            document.getElementById('article-content').style.display = 'none';
+
+            const errorElement = document.getElementById('article-error');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+
+        // 返回列表
+        function goBack() {
+            window.location.href = 'blog.html';
+        }
+    </script>
+</body>
+
+</html>

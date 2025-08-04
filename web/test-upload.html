@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片上传测试</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        button {
+            padding: 8px 15px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        input[type="file"],
+        input[type="password"] {
+            padding: 8px;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow: auto;
+        }
+
+        .preview {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .preview img {
+            max-width: 100%;
+            max-height: 300px;
+            border: 1px solid #ddd;
+        }
+
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>图片上传测试</h1>
+
+    <div class="section">
+        <h2>1. 验证密码</h2>
+        <input type="password" id="password" placeholder="请输入管理员密码">
+        <button id="verify-btn">验证密码</button>
+        <div id="verify-result" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="section">
+        <h2>2. 获取图片列表</h2>
+        <button id="list-btn">获取图片列表</button>
+        <pre id="list-result"></pre>
+    </div>
+
+    <div class="section">
+        <h2>3. 上传图片</h2>
+        <input type="file" id="file-upload" accept="image/*">
+        <div id="upload-preview" class="preview" style="display: none;">
+            <img id="preview-image" alt="预览图片">
+        </div>
+        <button id="upload-btn">上传图片</button>
+        <div id="upload-result" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        // 全局变量
+        let adminPassword = '';
+        const API_URL = 'https://rjjgamicpk.hzh.sealos.run/upload';
+
+        // DOM加载完成后执行
+        document.addEventListener('DOMContentLoaded', function () {
+            // 验证密码按钮
+            document.getElementById('verify-btn').addEventListener('click', function () {
+                const password = document.getElementById('password').value;
+                if (!password) {
+                    alert('请输入管理员密码');
+                    return;
+                }
+
+                adminPassword = password;
+
+                // 显示验证结果
+                const verifyResult = document.getElementById('verify-result');
+                verifyResult.textContent = '已设置密码: ' + '*'.repeat(password.length);
+                verifyResult.style.display = 'block';
+            });
+
+            // 获取图片列表按钮
+            document.getElementById('list-btn').addEventListener('click', function () {
+                if (!adminPassword) {
+                    alert('请先验证管理员密码');
+                    return;
+                }
+
+                // 发送请求
+                axios.post(API_URL, {
+                    action: 'list',
+                    password: adminPassword
+                }, {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                    .then(function (response) {
+                        // 显示响应结果
+                        const resultElement = document.getElementById('list-result');
+                        resultElement.textContent = JSON.stringify(response.data, null, 2);
+
+                        // 添加数据类型分析
+                        if (response.data && response.data.ok) {
+                            let analysisText = "\n\n// 数据分析:\n";
+
+                            if (response.data.data) {
+                                analysisText += `response.data.data 类型: ${typeof response.data.data}\n`;
+
+                                if (Array.isArray(response.data.data)) {
+                                    analysisText += `是数组，长度: ${response.data.data.length}\n`;
+                                } else if (typeof response.data.data === 'object') {
+                                    analysisText += `是对象，包含属性: ${Object.keys(response.data.data).join(', ')}\n`;
+
+                                    if (response.data.data.list) {
+                                        analysisText += `response.data.data.list 类型: ${typeof response.data.data.list}\n`;
+                                        if (Array.isArray(response.data.data.list)) {
+                                            analysisText += `是数组，长度: ${response.data.data.list.length}\n`;
+                                        }
+                                    }
+                                }
+                            } else {
+                                analysisText += "response.data.data 不存在\n";
+                            }
+
+                            resultElement.textContent += analysisText;
+                        }
+                    })
+                    .catch(function (error) {
+                        document.getElementById('list-result').textContent = '获取图片列表失败: ' + error.message;
+                        if (error.response) {
+                            document.getElementById('list-result').textContent += '\n\n' + JSON.stringify(error.response.data, null, 2);
+                        }
+                    });
+            });
+
+            // 文件选择预览
+            document.getElementById('file-upload').addEventListener('change', function () {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        document.getElementById('preview-image').src = e.target.result;
+                        document.getElementById('upload-preview').style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    document.getElementById('upload-preview').style.display = 'none';
+                }
+            });
+
+            // 上传图片按钮
+            document.getElementById('upload-btn').addEventListener('click', function () {
+                if (!adminPassword) {
+                    alert('请先验证管理员密码');
+                    return;
+                }
+
+                const file = document.getElementById('file-upload').files[0];
+                if (!file) {
+                    alert('请选择要上传的图片');
+                    return;
+                }
+
+                // 读取文件为base64
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const base64Data = e.target.result;
+
+                    // 发送上传请求
+                    axios.post(API_URL, {
+                        action: 'upload',
+                        password: adminPassword,
+                        file: base64Data,
+                        filename: file.name,
+                        mime: file.type
+                    }, {
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                        .then(function (response) {
+                            // 显示上传结果
+                            const uploadResult = document.getElementById('upload-result');
+                            uploadResult.textContent = JSON.stringify(response.data, null, 2);
+                            uploadResult.style.display = 'block';
+                        })
+                        .catch(function (error) {
+                            const uploadResult = document.getElementById('upload-result');
+                            uploadResult.textContent = '上传图片失败: ' + error.message;
+                            if (error.response) {
+                                uploadResult.textContent += '\n\n' + JSON.stringify(error.response.data, null, 2);
+                            }
+                            uploadResult.style.display = 'block';
+                        });
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+    </script>
+</body>
+
+</html>

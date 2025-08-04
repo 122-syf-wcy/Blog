@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>?? - Aurora?????</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        .articles-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .articles-header {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .articles-title {
+            font-size: 2em;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .articles-description {
+            color: #666;
+            font-size: 1em;
+        }
+
+        .article-list {
+            margin-bottom: 30px;
+        }
+
+        .article-item {
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+            display: flex;
+        }
+
+        .article-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .article-item a {
+            display: flex;
+            text-decoration: none;
+            color: inherit;
+            width: 100%;
+        }
+
+        .article-image {
+            flex: 0 0 200px;
+            height: 150px;
+            overflow: hidden;
+            background-color: #f5f5f5;
+            position: relative;
+        }
+
+        .article-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .article-item:hover .article-image img {
+            transform: scale(1.05);
+        }
+
+        .article-content {
+            padding: 20px;
+            flex: 1;
+        }
+
+        .article-title {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .article-meta {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        .article-meta span {
+            margin-right: 15px;
+        }
+
+        .article-meta i {
+            margin-right: 5px;
+        }
+
+        .article-category,
+        .article-tag {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            margin-right: 5px;
+            font-size: 0.85em;
+        }
+
+        .article-category {
+            background-color: #e1f5fe;
+            color: #0288d1;
+        }
+
+        .article-tag {
+            background-color: #f1f8e9;
+            color: #558b2f;
+        }
+
+        .article-summary {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .article-more {
+            color: #3498db;
+            font-weight: bold;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .pagination a {
+            color: black;
+            float: left;
+            padding: 8px 16px;
+            text-decoration: none;
+            border: 1px solid #ddd;
+            margin: 0 4px;
+            border-radius: 3px;
+        }
+
+        .pagination a.active {
+            background-color: #3498db;
+            color: white;
+            border: 1px solid #3498db;
+        }
+
+        .pagination a:hover:not(.active) {
+            background-color: #ddd;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2em;
+            color: #666;
+        }
+
+        .error-message {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2em;
+            color: #e74c3c;
+        }
+
+        .no-articles {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2em;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="logo">
+            <img src="images/avatar.jpg" alt="Aurora??">
+            <h1>Aurora</h1>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="index.html">??</a></li>
+                <li><a href="blog.html" class="active">??</a></li>
+                <li><a href="about.html">???</a></li>
+                <li><a href="message.html">???</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="articles-container">
+        <div class="articles-header">
+            <h1 class="articles-title">??????</h1>
+            <p class="articles-description">???????</p>
+        </div>
+
+        <div id="articles-loading" class="loading">
+            <i class="fas fa-spinner fa-spin"></i> ??????...
+        </div>
+
+        <div id="articles-error" class="error-message" style="display: none;">
+            ????????????
+        </div>
+
+        <div id="no-articles" class="no-articles" style="display: none;">
+            ????
+        </div>
+
+        <div id="article-list" class="article-list" style="display: none;">
+            <!-- ???????JavaScript???? -->
+        </div>
+
+        <div id="pagination" class="pagination">
+            <!-- ?????JavaScript???? -->
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2023 Aurora?????. ???????</p>
+    </footer>
+
+    <script>
+        // ??API?????
+        const API_URL = 'https://rjjgamicpk.hzh.sealos.run/article';
+
+        // ????
+        let currentPage = 1;
+
+        // DOM???????
+        document.addEventListener('DOMContentLoaded', function () {
+            // ??URL??
+            const urlParams = new URLSearchParams(window.location.search);
+            currentPage = parseInt(urlParams.get('page')) || 1;
+
+            // ??????
+            loadArticles();
+        });
+
+        // ??????
+        function loadArticles() {
+            // ?????
+            document.getElementById('articles-loading').style.display = 'block';
+            document.getElementById('articles-error').style.display = 'none';
+            document.getElementById('no-articles').style.display = 'none';
+            document.getElementById('article-list').style.display = 'none';
+            document.getElementById('pagination').innerHTML = '';
+
+            // ??????
+            const requestData = {
+                action: 'list',
+                page: currentPage,
+                size: 10
+            };
+
+            axios.post(API_URL, requestData, {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(function (response) {
+                    if (response.data.ok && response.data.data) {
+                        renderArticles(response.data.data);
+                    } else {
+                        showError(response.data.error || '??????');
+                    }
+                })
+                .catch(function (error) {
+                    console.error('????????:', error);
+                    showError('??????: ' + (error.response?.data?.error || error.message));
+                });
+        }
+
+        // ??????
+        function renderArticles(data) {
+            const { list, pagination } = data;
+
+            // ?????
+            document.getElementById('articles-loading').style.display = 'none';
+
+            if (list.length === 0) {
+                document.getElementById('no-articles').style.display = 'block';
+                return;
+            }
+
+            const articleListContainer = document.getElementById('article-list');
+            articleListContainer.innerHTML = '';
+            articleListContainer.style.display = 'block';
+
+            // ??????
+            list.forEach(article => {
+                const articleElement = document.createElement('div');
+                articleElement.className = 'article-item';
+
+                // ?????
+                const createdAt = new Date(article.createdAt);
+                const formattedDate = `${createdAt.getFullYear()}-${(createdAt.getMonth() + 1).toString().padStart(2, '0')}-${createdAt.getDate().toString().padStart(2, '0')}`;
+
+                // ?????
+                const categoryHtml = article.category ?
+                    `<span class="article-category">${article.category}</span>` : '';
+
+                // ?????
+                let tagsHtml = '';
+                if (article.tags && article.tags.length > 0) {
+                    article.tags.forEach(tag => {
+                        tagsHtml += `<span class="article-tag">${tag}</span>`;
+                    });
+                }
+
+                // ?????????????
+                let coverImage = 'images/post-default.jpg'; // ????
+                const articleId = article._id;
+
+                if (article.content) {
+                    // ????????????
+                    coverImage = extractAndStoreCoverImage(article.content, articleId);
+                }
+
+                // ?????????Markdown??
+                let excerpt = article.content || '';
+
+                // ??Markdown????
+                excerpt = excerpt.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '');
+
+                // ??Markdown??
+                excerpt = excerpt.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1');
+
+                // ??Markdown???????????
+                excerpt = excerpt.replace(/#{1,6}\s+/g, ''); // ??
+                excerpt = excerpt.replace(/\*\*([^*]+)\*\*/g, '$1'); // ??
+                excerpt = excerpt.replace(/\*([^*]+)\*/g, '$1'); // ??
+                excerpt = excerpt.replace(/`([^`]+)`/g, '$1'); // ??
+
+                // ??????
+                if (excerpt.length > 150) {
+                    excerpt = excerpt.substring(0, 150) + '...';
+                }
+
+                articleElement.innerHTML = `
+                    <a href="article.html?id=${article._id}">
+                        <div class="article-image">
+                            <img src="${coverImage}" alt="${article.title}" referrerpolicy="no-referrer" onerror="this.src='images/post-default.jpg';">
+                        </div>
+                        <div class="article-content">
+                            <h2 class="article-title">${article.title}</h2>
+                            <div class="article-meta">
+                                <span><i class="far fa-calendar-alt"></i> ${formattedDate}</span>
+                                <span><i class="far fa-eye"></i> ${article.views || 0} ??</span>
+                            </div>
+                            <div class="article-categories-tags">
+                                ${categoryHtml}
+                                ${tagsHtml}
+                            </div>
+                            <p class="article-summary">${excerpt}</p>
+                            <div class="article-more">???? &raquo;</div>
+                        </div>
+                    </a>
+                `;
+
+                articleListContainer.appendChild(articleElement);
+            });
+
+            // ????
+            renderPagination(pagination);
+        }
+
+        // ?????????????????
+        function extractAndStoreCoverImage(content, articleId) {
+            // ?????????Markdown???????
+            const imgRegex = /!\[([^\]]*)\]\(([^)]+)\)/;
+            const match = content.match(imgRegex);
+
+            if (match && match[2]) {
+                let imgUrl = match[2];
+                console.log('??????:', imgUrl.substring(0, 30) + (imgUrl.length > 30 ? '...' : ''));
+
+                // ?????Data URL (?data:???????)
+                if (imgUrl.startsWith('data:')) {
+                    // ?????URL?localStorage????
+                    const cacheKey = `article_cover_${articleId}`;
+                    try {
+                        // ????Data URL???localStorage?
+                        localStorage.setItem(cacheKey, imgUrl);
+                        console.log('???Data URL??????');
+
+                        // ???????????????URL
+                        const tempImage = document.createElement('img');
+                        tempImage.src = imgUrl;
+                        tempImage.style.display = 'none';
+                        document.body.appendChild(tempImage);
+
+                        // ????????????????????
+                        tempImage.onload = function () {
+                            try {
+                                // ????canvas
+                                const canvas = document.createElement('canvas');
+                                canvas.width = 200;
+                                canvas.height = 150;
+
+                                // ?????
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(tempImage, 0, 0, 200, 150);
+
+                                // ????????URL
+                                const thumbnailUrl = canvas.toDataURL('image/jpeg', 0.7);
+
+                                // ????????
+                                localStorage.setItem(`${cacheKey}_thumb`, thumbnailUrl);
+                                console.log('????????');
+
+                                // ??????????????
+                                const imgElement = document.querySelector(`.article-item a[href="article.html?id=${articleId}"] img`);
+                                if (imgElement) {
+                                    imgElement.src = thumbnailUrl;
+                                }
+                            } catch (err) {
+                                console.error('???????:', err);
+                            }
+
+                            // ??????
+                            document.body.removeChild(tempImage);
+                        };
+
+                        // ?????????????????????
+                        return 'images/article-cover.jpg';
+                    } catch (error) {
+                        console.error('??Data URL????:', error);
+                        // ?????????????
+                        return 'images/article-cover.jpg';
+                    }
+                } else if (imgUrl.includes('baidu.com')) {
+                    // ????????????
+                    imgUrl = `https://images.weserv.nl/?url=${encodeURIComponent(imgUrl)}`;
+                    console.log('????URL');
+                    return imgUrl;
+                } else {
+                    // ????URL??
+                    return imgUrl;
+                }
+            }
+
+            // ???????????????
+            return 'images/post-default.jpg';
+        }
+
+        // ????
+        function renderPagination(pagination) {
+            const { page, pages } = pagination;
+            const paginationContainer = document.getElementById('pagination');
+            paginationContainer.innerHTML = '';
+
+            if (pages <= 1) return;
+
+            // ?????
+            if (page > 1) {
+                const prevLink = document.createElement('a');
+                prevLink.href = 'javascript:void(0)';
+                prevLink.innerHTML = '&laquo; ???';
+                prevLink.addEventListener('click', function () {
+                    currentPage = page - 1;
+                    loadArticles();
+                    updateUrlParams();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+                paginationContainer.appendChild(prevLink);
+            }
+
+            // ????
+            let startPage = Math.max(1, page - 2);
+            let endPage = Math.min(pages, page + 2);
+
+            // ??????5????????
+            if (endPage - startPage < 4) {
+                if (startPage === 1) {
+                    endPage = Math.min(pages, startPage + 4);
+                } else if (endPage === pages) {
+                    startPage = Math.max(1, endPage - 4);
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const pageLink = document.createElement('a');
+                pageLink.href = 'javascript:void(0)';
+                pageLink.textContent = i;
+                if (i === page) {
+                    pageLink.className = 'active';
+                }
+                pageLink.addEventListener('click', function () {
+                    currentPage = i;
+                    loadArticles();
+                    updateUrlParams();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+                paginationContainer.appendChild(pageLink);
+            }
+
+            // ?????
+            if (page < pages) {
+                const nextLink = document.createElement('a');
+                nextLink.href = 'javascript:void(0)';
+                nextLink.innerHTML = '??? &raquo;';
+                nextLink.addEventListener('click', function () {
+                    currentPage = page + 1;
+                    loadArticles();
+                    updateUrlParams();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+                paginationContainer.appendChild(nextLink);
+            }
+        }
+
+        // ??URL??
+        function updateUrlParams() {
+            const urlParams = new URLSearchParams();
+
+            if (currentPage > 1) {
+                urlParams.set('page', currentPage);
+            }
+
+            const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+            history.pushState({}, '', newUrl);
+        }
+
+        // ??????
+        function showError(message) {
+            document.getElementById('articles-loading').style.display = 'none';
+
+            const errorElement = document.getElementById('articles-error');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+    </script>
+</body>
+
+</html>

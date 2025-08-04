@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理后台 - Aurora的个人博客</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
+    <script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        /* General Admin Styles */
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .login-form {
+            background-color: #fff;
+            border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            text-align: center;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .login-form input {
+            padding: 10px;
+            width: 60%;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .login-form button {
+            padding: 10px 20px;
+        }
+        
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* Tabs */
+        .admin-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        .admin-tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-bottom: none;
+            margin-right: 5px;
+            border-radius: 5px 5px 0 0;
+            background-color: #f1f1f1;
+        }
+        .admin-tab.active {
+            background-color: #fff;
+            border-color: #ddd;
+            border-bottom-color: #fff;
+            margin-bottom: -1px;
+            font-weight: bold;
+        }
+        .admin-tab:hover:not(.active) {
+            background-color: #e9e9e9;
+        }
+        .tab-content {
+            display: none;
+            background-color: #fff;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input[type="text"],
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        /* Tables */
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .admin-table th,
+        .admin-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .admin-table th {
+            background-color: #f5f5f5;
+        }
+        .admin-table tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        /* Buttons */
+        .action-btn, .submit-btn, .cancel-btn {
+             padding: 8px 15px;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+        }
+        .action-btn { background-color: #3498db; }
+        .submit-btn { background-color: #4caf50; }
+        .cancel-btn { background-color: #f44336; }
+
+        .action-btn:hover { background-color: #2980b9; }
+        .submit-btn:hover { background-color: #45a049; }
+        .cancel-btn:hover { background-color: #d32f2f; }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            z-index: 1001;
+            display: none;
+        }
+        .success { background-color: #2ecc71; }
+        .error { background-color: #e74c3c; }
+        .info { background-color: #3498db; }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .pagination a {
+            color: black;
+            padding: 8px 16px;
+            text-decoration: none;
+            border: 1px solid #ddd;
+            margin: 0 4px;
+            border-radius: 3px;
+        }
+        .pagination a.active {
+            background-color: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        .pagination a:hover:not(.active) {
+            background-color: #ddd;
+        }
+
+        /* Specific to Article Admin */
+        #article-management .CodeMirror {
+            height: 400px !important;
+        }
+        #article-management .tag-input {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 5px;
+        }
+        #article-management .tag {
+            background-color: #e1f5fe;
+            border-radius: 3px;
+            padding: 5px 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Specific to Message Admin */
+        #message-management .status-filter {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        #message-management .status-filter button {
+             padding: 8px 15px;
+            background-color: #f1f1f1;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+         #message-management .status-filter button.active {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        /* Specific to Image Admin */
+        #image-management .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        #image-management .image-item {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+        }
+        #image-management .image-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="index.html">Aurora的个人博客</a>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="index.html">首页</a></li>
+                <li><a href="blog.html">博客</a></li>
+                <li><a href="about.html">关于我</a></li>
+                <li><a href="message.html">留言板</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="admin-container">
+        <div id="login-section" class="login-form">
+            <h2>管理员登录</h2>
+            <input type="password" id="admin-password" placeholder="请输入管理员密码">
+            <button id="login-btn" class="submit-btn">登录</button>
+        </div>
+
+        <div id="admin-panel" style="display: none;">
+            <div class="admin-header">
+                <h1>管理后台</h1>
+            </div>
+
+            <div class="admin-tabs">
+                <div class="admin-tab active" data-tab="article-management">文章管理</div>
+                <div class="admin-tab" data-tab="message-management">留言管理</div>
+                <div class="admin-tab" data-tab="image-management">图片管理</div>
+            </div>
+
+            <div id="article-management" class="tab-content active">
+                <div class="admin-actions" style="margin-bottom: 20px;">
+                    <button id="new-article-btn" class="action-btn"><i class="fas fa-plus"></i> 新建文章</button>
+                    <button id="refresh-articles-btn" class="action-btn"><i class="fas fa-sync-alt"></i> 刷新列表</button>
+                </div>
+                <div id="article-list-view">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>标题</th>
+                                <th>分类</th>
+                                <th>标签</th>
+                                <th>发布时间</th>
+                                <th>阅读量</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="article-list-body"></tbody>
+                    </table>
+                    <div id="articles-pagination" class="pagination"></div>
+                </div>
+                <div id="article-edit-view" style="display: none;">
+                    <form id="article-form">
+                        <input type="hidden" id="article-id">
+                        <div class="form-group">
+                            <label for="article-title">文章标题</label>
+                            <input type="text" id="article-title" placeholder="请输入文章标题" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="article-category">文章分类</label>
+                            <select id="article-category" required>
+                                <option value="">请选择分类</option>
+                                <option value="技术">技术</option>
+                                <option value="生活">生活</option>
+                                <option value="随笔">随笔</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="article-tags">文章标签</label>
+                            <div class="tag-input" id="tag-container">
+                                <input type="text" id="tag-input" placeholder="输入标签按回车添加">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="article-content-editor">文章内容</label>
+                            <textarea id="article-content-editor"></textarea>
+                             <div class="editor-tips">
+                                <p><i class="fas fa-info-circle"></i> 支持Markdown格式，图片插入格式: ![图片描述](图片URL)</p>
+                             </div>
+                        </div>
+                        <div class="button-group">
+                            <button type="button" class="cancel-btn" id="cancel-edit-btn">取消</button>
+                            <button type="submit" class="submit-btn" id="submit-article-btn">发布文章</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div id="message-management" class="tab-content">
+                 <div class="status-filter">
+                    <button class="filter-btn active" data-status="all">全部</button>
+                    <button class="filter-btn" data-status="0">待审核</button>
+                    <button class="filter-btn" data-status="1">已通过</button>
+                    <button class="filter-btn" data-status="2">已拒绝</button>
+                </div>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>昵称</th>
+                            <th>邮箱</th>
+                            <th>内容</th>
+                            <th>状态</th>
+                            <th>时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="message-list-body"></tbody>
+                </table>
+                <div id="messages-pagination" class="pagination"></div>
+                 <div id="reply-modal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <span class="close">&times;</span>
+                        <h3>回复留言</h3>
+                        <div id="message-to-reply" class="message-detail"></div>
+                        <textarea id="reply-content" placeholder="请输入回复内容"></textarea>
+                        <button id="submit-reply" class="submit-btn">提交回复</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="image-management" class="tab-content">
+                <div class="upload-section" style="margin-bottom: 20px;">
+                    <h2>上传新图片</h2>
+                    <div class="upload-form">
+                        <input type="file" id="image-upload" accept="image/*">
+                        <div id="upload-preview" style="display: none;"><img id="preview-image" alt="预览图片" style="max-width:200px; max-height:200px;"></div>
+                        <button id="upload-btn" class="submit-btn">上传图片</button>
+                    </div>
+                </div>
+                <h2>图片列表</h2>
+                <div id="image-grid-container" class="image-grid"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="notification" class="notification"></div>
+
+    <footer>
+        <p>&copy; 2023 Aurora的个人博客. 保留所有权利.</p>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // --- Globals ---
+        let adminPassword = '';
+        let articleEditor;
+        let currentArticlePage = 1;
+        let currentMessagePage = 1;
+        let currentMessageStatus = 'all';
+
+        const API_URLS = {
+            articles: 'https://rjjgamicpk.hzh.sealos.run/article',
+            messages: 'https://rjjgamicpk.hzh.sealos.run/message-admin',
+            images: 'https://rjjgamicpk.hzh.sealos.run/upload'
+        };
+
+        // --- Login ---
+        const loginSection = document.getElementById('login-section');
+        const adminPanel = document.getElementById('admin-panel');
+        const loginBtn = document.getElementById('login-btn');
+        const passwordInput = document.getElementById('admin-password');
+
+        loginBtn.addEventListener('click', login);
+        passwordInput.addEventListener('keyup', e => e.key === 'Enter' && login());
+
+        function login() {
+            const password = passwordInput.value;
+            if (!password) return showNotification('请输入管理员密码', 'error');
+            
+            // Use article list as a simple password check
+            axios.post(API_URLS.articles, { action: 'list', password: password, page: 1, size: 1 })
+                .then(res => {
+                    if (res.data.ok) {
+                        adminPassword = password;
+                        loginSection.style.display = 'none';
+                        adminPanel.style.display = 'block';
+                        showNotification('登录成功', 'success');
+                        initializeAdminPanel();
+                    } else {
+                        showNotification(res.data.error || '登录失败', 'error');
+                    }
+                })
+                .catch(err => showNotification('登录请求失败', 'error'));
+        }
+
+        // --- Tabs ---
+        const tabs = document.querySelectorAll('.admin-tab');
+        tabs.forEach(tab => tab.addEventListener('click', () => switchTab(tab.dataset.tab)));
+
+        function switchTab(tabId) {
+            tabs.forEach(t => t.classList.remove('active'));
+            document.querySelector(`.admin-tab[data-tab="${tabId}"]`).classList.add('active');
+            
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            
+            // Load content for the new tab
+            if(tabId === 'article-management') loadArticles();
+            if(tabId === 'message-management') loadMessages();
+            if(tabId === 'image-management') loadImages();
+        }
+        
+        // --- Initialization ---
+        function initializeAdminPanel() {
+            // Initial load
+            loadArticles();
+            initArticleEditor();
+            
+            // Setup event listeners once
+            setupArticleListeners();
+            setupMessageListeners();
+            setupImageListeners();
+        }
+
+        // --- Notifications ---
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.style.display = 'block';
+            setTimeout(() => notification.style.display = 'none', 3000);
+        }
+
+        
+
+        function setupArticleListeners() {
+            document.getElementById('new-article-btn').addEventListener('click', () => showArticleEditor());
+            document.getElementById('refresh-articles-btn').addEventListener('click', loadArticles);
+            document.getElementById('article-form').addEventListener('submit', submitArticle);
+            document.getElementById('cancel-edit-btn').addEventListener('click', () => showArticleListView());
+        }
+
+        function initArticleEditor() {
+             if (!articleEditor) {
+                articleEditor = new SimpleMDE({ element: document.getElementById("article-content-editor") });
+            }
+        }
+
+        function loadArticles() {
+            showNotification('加载文章列表中...', 'info');
+            axios.post(API_URLS.articles, { action: 'list', page: currentArticlePage, size: 10 })
+                .then(res => {
+                    if (res.data.ok) {
+                        const { list, pagination } = res.data.data;
+                        const tbody = document.getElementById('article-list-body');
+                        tbody.innerHTML = '';
+                        list.forEach(article => {
+                            const row = tbody.insertRow();
+                            row.innerHTML = `
+                                <td>${article.title}</td>
+                                <td>${article.category || ''}</td>
+                                <td>${(article.tags || []).join(', ')}</td>
+                                <td>${new Date(article.createdAt).toLocaleDateString()}</td>
+                                <td>${article.views || 0}</td>
+                                <td>
+                                    <button onclick="window.adminFuncs.editArticle('${article._id}')" class="action-btn">编辑</button>
+                                    <button onclick="window.adminFuncs.deleteArticle('${article._id}')" class="cancel-btn">删除</button>
+                                </td>
+                            `;
+                        });
+                        renderPagination('articles-pagination', pagination, (page) => { currentArticlePage = page; loadArticles(); });
+                    }
+                })
+                .catch(err => showNotification('加载文章列表失败', 'error'));
+        }
+
+        function showArticleEditor(article = null) {
+            document.getElementById('article-list-view').style.display = 'none';
+            document.getElementById('article-edit-view').style.display = 'block';
+            const form = document.getElementById('article-form');
+            form.reset();
+            articleEditor.value('');
+            document.getElementById('article-id').value = '';
+            
+            if (article) {
+                document.getElementById('article-id').value = article._id;
+                document.getElementById('article-title').value = article.title;
+                document.getElementById('article-category').value = article.category;
+                articleEditor.value(article.content);
+                // Tags would need more complex handling
+            }
+        }
+        
+        function showArticleListView() {
+            document.getElementById('article-edit-view').style.display = 'none';
+            document.getElementById('article-list-view').style.display = 'block';
+        }
+
+        function submitArticle(e) {
+            e.preventDefault();
+            const id = document.getElementById('article-id').value;
+            const articleData = {
+                title: document.getElementById('article-title').value,
+                category: document.getElementById('article-category').value,
+                content: articleEditor.value(),
+                tags: [] // Simplified
+            };
+
+            const action = id ? 'update' : 'add';
+            axios.post(API_URLS.articles, { action, id, article: articleData, password: adminPassword })
+                .then(res => {
+                    if (res.data.ok) {
+                        showNotification('文章保存成功', 'success');
+                        showArticleListView();
+                        loadArticles();
+                    } else {
+                        showNotification(res.data.error || '保存失败', 'error');
+                    }
+                })
+                .catch(err => showNotification('保存请求失败', 'error'));
+        }
+
+        function deleteArticle(id) {
+            if (!confirm('确定要删除这篇文章吗?')) return;
+            axios.post(API_URLS.articles, { action: 'delete', id, password: adminPassword })
+                .then(res => {
+                    if(res.data.ok) {
+                        showNotification('文章删除成功', 'success');
+                        loadArticles();
+                    } else {
+                        showNotification(res.data.error || '删除失败', 'error');
+                    }
+                })
+                .catch(err => showNotification('删除请求失败', 'error'));
+        }
+        
+        function editArticle(id) {
+            axios.post(API_URLS.articles, { action: 'get', id, password: adminPassword })
+                .then(res => {
+                    if (res.data.ok) {
+                        showArticleEditor(res.data.data);
+                    } else {
+                        showNotification(res.data.error || '加载文章失败', 'error');
+                    }
+                })
+        }
+        
+        function renderPagination(containerId, pagination, callback) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            if (pagination.pages <= 1) return;
+            for (let i = 1; i <= pagination.pages; i++) {
+                const a = document.createElement('a');
+                a.href = '#';
+                a.innerText = i;
+                if (i === pagination.page) a.classList.add('active');
+                a.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    callback(i);
+                });
+                container.appendChild(a);
+            }
+        }
+        
+
+        
+
+        function setupMessageListeners() {
+            document.querySelectorAll('#message-management .filter-btn').forEach(btn => 
+                btn.addEventListener('click', () => {
+                    currentMessageStatus = btn.dataset.status;
+                    document.querySelectorAll('#message-management .filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    loadMessages();
+                })
+            );
+        }
+
+        function loadMessages() {
+            showNotification('加载留言列表中...', 'info');
+            const params = { 
+                action: 'list', 
+                password: adminPassword, 
+                page: currentMessagePage, 
+                size: 10,
+                status: currentMessageStatus === 'all' ? undefined : currentMessageStatus
+            };
+            axios.post(API_URLS.messages, params)
+                .then(res => {
+                    if (res.data.ok) {
+                        const { list, pagination } = res.data.data;
+                        const tbody = document.getElementById('message-list-body');
+                        tbody.innerHTML = '';
+                        list.forEach(msg => {
+                            const row = tbody.insertRow();
+                            const statusMap = { 0: '待审核', 1: '已通过', 2: '已拒绝' };
+                            row.innerHTML = `
+                                <td>${msg.nickname}</td>
+                                <td>${msg.email}</td>
+                                <td>${msg.content}</td>
+                                <td>${statusMap[msg.status] || '未知'}</td>
+                                <td>${new Date(msg.createdAt).toLocaleDateString()}</td>
+                                <td>
+                                    <button onclick="window.adminFuncs.approveMessage('${msg._id}')" class="action-btn">通过</button>
+                                    <button onclick="window.adminFuncs.rejectMessage('${msg._id}')" class="cancel-btn">拒绝</button>
+                                </td>
+                            `;
+                        });
+                        renderPagination('messages-pagination', pagination, (page) => { currentMessagePage = page; loadMessages(); });
+                    }
+                })
+                .catch(err => showNotification('加载留言列表失败', 'error'));
+        }
+
+        function approveMessage(id) {
+            axios.post(API_URLS.messages, { action: 'approve', id, password: adminPassword })
+                .then(res => {
+                    if(res.data.ok) {
+                        showNotification('留言已通过', 'success');
+                        loadMessages();
+                    } else {
+                        showNotification(res.data.error || '操作失败', 'error');
+                    }
+                });
+        }
+
+        function rejectMessage(id) {
+            axios.post(API_URLS.messages, { action: 'reject', id, password: adminPassword })
+                .then(res => {
+                    if(res.data.ok) {
+                        showNotification('留言已拒绝', 'success');
+                        loadMessages();
+                    } else {
+                         showNotification(res.data.error || '操作失败', 'error');
+                    }
+                });
+        }
+        
+        window.adminFuncs = { editArticle, deleteArticle, approveMessage, rejectMessage, deleteImage };
+        
+
+        // --- Images Module ---
+        function setupImageListeners() {
+            document.getElementById('upload-btn').addEventListener('click', uploadImage);
+            document.getElementById('image-upload').addEventListener('change', previewImage);
+        }
+
+        function loadImages() {
+            showNotification('加载图片列表中...', 'info');
+            axios.post(API_URLS.images, { action: 'list', password: adminPassword })
+                .then(res => {
+                    if(res.data.ok) {
+                        const grid = document.getElementById('image-grid-container');
+                        grid.innerHTML = '';
+                        res.data.data.forEach(img => {
+                            const item = document.createElement('div');
+                            item.className = 'image-item';
+                            item.innerHTML = `
+                                <img src="${img.url}" alt="${img.originalName}">
+                                <div class="image-info">
+                                    <p>${img.originalName}</p>
+                                    <button onclick="window.adminFuncs.deleteImage('${img._id}')" class="cancel-btn">删除</button>
+                                </div>
+                            `;
+                            grid.appendChild(item);
+                        });
+                    }
+                })
+                .catch(err => showNotification('加载图片列表失败', 'error'));
+        }
+
+        function uploadImage() {
+            const fileInput = document.getElementById('image-upload');
+            const file = fileInput.files[0];
+            if (!file) return showNotification('请选择文件', 'error');
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Data = e.target.result;
+                axios.post(API_URLS.images, {
+                    action: 'upload',
+                    password: adminPassword,
+                    file: base64Data,
+                    filename: file.name,
+                    mime: file.type
+                })
+                .then(res => {
+                    if (res.data.ok) {
+                        showNotification('图片上传成功', 'success');
+                        loadImages();
+                    } else {
+                        showNotification(res.data.error || '上传失败', 'error');
+                    }
+                })
+                .catch(err => showNotification('上传请求失败', 'error'));
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function previewImage() {
+            const file = document.getElementById('image-upload').files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = e => document.getElementById('preview-image').src = e.target.result;
+                reader.readAsDataURL(file);
+                document.getElementById('upload-preview').style.display = 'block';
+            }
+        }
+
+        function deleteImage(id) {
+            if (!confirm('确定要删除这张图片吗?')) return;
+            axios.post(API_URLS.images, { action: 'delete', id, password: adminPassword })
+                .then(res => {
+                    if(res.data.ok) {
+                        showNotification('图片删除成功', 'success');
+                        loadImages();
+                    } else {
+                        showNotification(res.data.error || '删除失败', 'error');
+                    }
+                })
+                .catch(err => showNotification('删除请求失败', 'error'));
+        }
+        
+        
+
+    });
+</script>
+</body>
+</html>

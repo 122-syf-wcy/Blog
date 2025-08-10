@@ -14,6 +14,12 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <!-- 引入Mermaid图表支持 -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <!-- 代码高亮与公式渲染 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
     <style>
         body {
             background: transparent;
@@ -395,6 +401,18 @@
 
             // 处理Data URL图片嵌入的替代方案
             let processedContent = article.content || '';
+
+            // 如果有封面，优先在文章顶部展示（不影响正文）
+            try {
+                if (article.coverImage) {
+                    const contentElementTop = document.getElementById('content');
+                    const coverEl = document.createElement('div');
+                    coverEl.style.marginBottom = '16px';
+                    coverEl.innerHTML = `<img src="${article.coverImage}" alt="封面" style="width:100%;max-height:420px;object-fit:cover;border-radius:6px;" onerror="this.src='images/post-default.jpg'" />`;
+                    // 暂存，稍后插入渲染后的内容顶部
+                    contentElementTop.dataset.__coverHtml = coverEl.innerHTML;
+                }
+            } catch (e) {}
             
             // 安全检查
             if (typeof processedContent !== 'string') {
@@ -424,28 +442,45 @@
                 return match;
             });
 
-            // 使用marked.js渲染Markdown，配置为允许HTML
+            // 使用 marked.js 渲染 Markdown，增强能力
             marked.setOptions({
                 renderer: new marked.Renderer(),
                 gfm: true,
                 breaks: true,
-                sanitize: false, // 关键：设置为false以允许HTML标签
+                sanitize: false,
                 smartLists: true,
                 smartypants: false,
-                xhtml: false
+                xhtml: false,
+                highlight: function(code, lang) {
+                    try { return hljs.highlight(code, { language: lang || 'plaintext' }).value; } catch (e) { return code; }
+                }
             });
             const renderedContent = marked.parse(processedContent);
-            contentElement.innerHTML = renderedContent;
+            const coverHtml = contentElement.dataset.__coverHtml || '';
+            contentElement.innerHTML = coverHtml + renderedContent;
+
+            // 渲染 KaTeX 数学公式
+            try {
+                renderMathInElement(contentElement, {
+                    delimiters: [
+                        { left: '$$', right: '$$', display: true },
+                        { left: '$', right: '$', display: false },
+                        { left: '\\(', right: '\\)', display: false },
+                        { left: '\\[', right: '\\]', display: true }
+                    ]
+                });
+            } catch (e) { console.warn('KaTeX 渲染失败', e); }
 
             // 手动渲染 Mermaid 图表
             try {
-                const mermaidElements = contentElement.querySelectorAll('.language-mermaid');
+                const mermaidElements = contentElement.querySelectorAll('code.language-mermaid');
                 mermaidElements.forEach((element, index) => {
                     const mermaidContainer = document.createElement('div');
                     mermaidContainer.id = `mermaid-chart-${index}`;
                     mermaidContainer.className = 'mermaid';
                     mermaidContainer.textContent = element.textContent;
-                    element.parentNode.replaceWith(mermaidContainer);
+                    const pre = element.closest('pre');
+                    if (pre) pre.replaceWith(mermaidContainer);
                 });
                 mermaid.run({
                     nodes: document.querySelectorAll('.mermaid')

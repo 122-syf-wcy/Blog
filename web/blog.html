@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>博客 - Aurora的个人博客</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        .articles-container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        .articles-header { margin-bottom: 30px; text-align: center; }
+        .articles-title { font-size: 2em; margin-bottom: 8px; color: #333; }
+        .articles-description { color: #666; }
+
+        .article-list { margin-bottom: 30px; }
+        .article-item { background-color: #fff; border-radius: 8px; box-shadow: 0 3px 12px rgba(0,0,0,.08); margin-bottom: 18px; overflow: hidden; display: flex; transition: transform .25s ease; }
+        .article-item:hover { transform: translateY(-4px); }
+        .article-item a { display: flex; width: 100%; text-decoration: none; color: inherit; }
+        .article-image { flex: 0 0 240px; height: 160px; background: #f5f5f5; position: relative; overflow: hidden; }
+        .article-image img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .3s ease; }
+        .article-item:hover .article-image img { transform: scale(1.05); }
+        .article-content { padding: 18px; flex: 1; }
+        .article-title { font-size: 1.35em; margin: 0 0 8px; color: #333; }
+        .article-meta { color: #666; font-size: .9em; margin-bottom: 10px; }
+        .article-meta span { margin-right: 14px; }
+        .article-category, .article-tag { display: inline-block; padding: 3px 8px; border-radius: 3px; margin-right: 6px; font-size: .85em; }
+        .article-category { background-color: #e1f5fe; color: #0288d1; }
+        .article-tag { background-color: #f1f8e9; color: #558b2f; }
+        .article-summary { color: #555; line-height: 1.6; margin-top: 8px; }
+
+        .pagination { display: flex; justify-content: center; margin-top: 24px; gap: 6px; }
+        .pagination a { color: #333; padding: 8px 14px; text-decoration: none; border: 1px solid #ddd; border-radius: 4px; }
+        .pagination a.active { background-color: #3498db; color: #fff; border-color: #3498db; }
+        .pagination a:hover { background-color: #f1f1f1; }
+
+        .loading, .error-message, .no-articles { text-align: center; padding: 40px; color: #666; }
+        .error-message { color: #e74c3c; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="images/avatar.jpg" alt="Aurora头像">
+            <h1>Aurora</h1>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="index.html">首页</a></li>
+                <li><a href="blog.html" class="active">博客</a></li>
+                <li><a href="about.html">关于我</a></li>
+                <li><a href="message.html">留言板</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="articles-container">
+        <div class="articles-header">
+            <h1 class="articles-title">全部文章</h1>
+            <p class="articles-description">浏览博客的全部文章列表</p>
+        </div>
+
+        <div id="articles-loading" class="loading"><i class="fas fa-spinner fa-spin"></i> 正在加载文章...</div>
+        <div id="articles-error" class="error-message" style="display:none;"></div>
+        <div id="no-articles" class="no-articles" style="display:none;">暂无文章</div>
+        <div id="article-list" class="article-list" style="display:none;"></div>
+        <div id="pagination" class="pagination"></div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Aurora的个人博客. 保留所有权利.</p>
+    </footer>
+
+    <script>
+        const API_URL = 'https://rjjgamicpk.hzh.sealos.run/article';
+        let currentPage = 1;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            currentPage = parseInt(urlParams.get('page')) || 1;
+            loadArticles();
+        });
+
+        function loadArticles() {
+            document.getElementById('articles-loading').style.display = 'block';
+            document.getElementById('articles-error').style.display = 'none';
+            document.getElementById('no-articles').style.display = 'none';
+            document.getElementById('article-list').style.display = 'none';
+            document.getElementById('pagination').innerHTML = '';
+
+            axios.post(API_URL, { action: 'list', page: currentPage, size: 10 }, { headers: { 'Content-Type': 'application/json' } })
+                .then(res => {
+                    if (res.data.ok && res.data.data) {
+                        renderArticles(res.data.data);
+                    } else {
+                        showError(res.data.error || '加载失败');
+                    }
+                })
+                .catch(err => showError('加载失败: ' + (err.response?.data?.error || err.message)));
+        }
+
+        function renderArticles(data) {
+            const { list, pagination } = data;
+            document.getElementById('articles-loading').style.display = 'none';
+            if (!list || list.length === 0) { document.getElementById('no-articles').style.display = 'block'; return; }
+
+            const container = document.getElementById('article-list');
+            container.innerHTML = '';
+            container.style.display = 'block';
+
+            list.forEach(article => {
+                const item = document.createElement('div');
+                item.className = 'article-item';
+
+                const createdAt = new Date(article.createdAt);
+                const formattedDate = `${createdAt.getFullYear()}-${(createdAt.getMonth()+1).toString().padStart(2,'0')}-${createdAt.getDate().toString().padStart(2,'0')}`;
+
+                const categoryHtml = article.category ? `<span class="article-category">${article.category}</span>` : '';
+
+                let tagsHtml = '';
+                if (article.tags && article.tags.length > 0) {
+                    (article.tags || []).slice(0, 4).forEach(tag => tagsHtml += `<span class=\"article-tag\">${tag}</span>`);
+                }
+
+                // 封面：优先 article.coverImage，其次从内容提取首图
+                let coverImage = article.coverImage || 'images/post-default.jpg';
+                if (!article.coverImage && article.content) {
+                    try {
+                        const content = typeof article.content === 'string' ? article.content : String(article.content || '');
+                        const match = content.match(/!\[([^\]]*)\]\(([^)]+)\)/);
+                        if (match && match[2]) {
+                            const imgUrl = match[2];
+                            if (!(imgUrl.startsWith('file://') || imgUrl.match(/^[a-zA-Z]:\\/))) {
+                                coverImage = imgUrl;
+                            }
+                        }
+                    } catch (e) {}
+                }
+
+                // 摘要：清理部分 Markdown 符号
+                let excerpt = (article.content || '').replace(/!\[[^\]]*\]\([^)]*\)/g, '').replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1').replace(/#{1,6}\s+/g, '').replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\*([^*]+)\*/g, '$1').replace(/`([^`]+)`/g, '$1');
+                if (excerpt.length > 150) excerpt = excerpt.substring(0, 150) + '...';
+
+                item.innerHTML = `
+                    <a href="article.html?id=${article._id}">
+                        <div class="article-image">
+                            <img src="${coverImage}" alt="${article.title}" referrerpolicy="no-referrer" onerror="this.src='images/post-default.jpg';">
+                        </div>
+                        <div class="article-content">
+                            <h2 class="article-title">${article.title}</h2>
+                            <div class="article-meta">
+                                <span><i class="far fa-calendar-alt"></i> ${formattedDate}</span>
+                                <span><i class="far fa-eye"></i> ${article.views || 0} 阅读</span>
+                            </div>
+                            <div class="article-categories-tags">${categoryHtml}${tagsHtml}</div>
+                            <p class="article-summary">${excerpt}</p>
+                        </div>
+                    </a>`;
+
+                container.appendChild(item);
+            });
+
+            renderPagination(pagination);
+        }
+
+        function renderPagination(pagination) {
+            const { page, pages } = pagination;
+            const container = document.getElementById('pagination');
+            container.innerHTML = '';
+            if (pages <= 1) return;
+
+            function addLink(text, targetPage, active=false) {
+                const a = document.createElement('a');
+                a.href = 'javascript:void(0)';
+                a.textContent = text;
+                if (active) a.className = 'active';
+                a.addEventListener('click', () => { currentPage = targetPage; loadArticles(); updateUrlParams(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+                container.appendChild(a);
+            }
+
+            if (page > 1) addLink('« 上一页', page - 1);
+            let start = Math.max(1, page - 2), end = Math.min(pages, page + 2);
+            if (end - start < 4) { if (start === 1) end = Math.min(pages, start + 4); else if (end === pages) start = Math.max(1, end - 4); }
+            for (let i = start; i <= end; i++) addLink(String(i), i, i === page);
+            if (page < pages) addLink('下一页 »', page + 1);
+        }
+
+        function updateUrlParams() {
+            const params = new URLSearchParams();
+            if (currentPage > 1) params.set('page', currentPage);
+            history.pushState({}, '', window.location.pathname + (params.toString() ? '?' + params.toString() : ''));
+        }
+
+        function showError(message) {
+            document.getElementById('articles-loading').style.display = 'none';
+            const el = document.getElementById('articles-error');
+            el.textContent = message; el.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
+

@@ -10,6 +10,15 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
     <script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- 代码高亮 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
+    <!-- KaTeX 数学公式 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <!-- Mermaid 图表预览 -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <style>
         /* General Admin Styles */
         .admin-container {
@@ -322,6 +331,21 @@
                             </div>
                         </div>
                         <div class="form-group">
+                            <label for="article-cover">封面图片</label>
+                            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                                <img id="cover-preview" alt="封面预览" style="max-width:240px;max-height:150px;display:none;border:1px solid #eee;border-radius:4px;">
+                                <input type="text" id="article-cover" placeholder="封面图片URL（可留空）" style="flex:1;min-width:260px;">
+                                <input type="file" id="cover-file" accept="image/*" style="display:none;">
+                                <button type="button" class="action-btn" id="choose-cover-btn">选择文件上传</button>
+                                <button type="button" class="action-btn" id="pick-cover-gallery-btn">从图库选择</button>
+                                <button type="button" class="cancel-btn" id="clear-cover-btn">清除</button>
+                            </div>
+                            <small>
+                                - 百度图片快速链接：<a href="baidu-image-guide.html" target="_blank" rel="noopener noreferrer">使用指南</a>
+                                - 本地图库：点击“从图库选择”快速插入已上传图片
+                            </small>
+                        </div>
+                        <div class="form-group">
                             <label for="article-content-editor">文章内容</label>
                             <textarea id="article-content-editor"></textarea>
                              <div class="editor-tips">
@@ -385,6 +409,15 @@
     
     <div id="notification" class="notification"></div>
 
+    <!-- 图片选择器弹窗（复用消息回复的 .modal 样式） -->
+    <div id="image-picker-modal" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width:900px;">
+            <span class="close" id="image-picker-close">&times;</span>
+            <h3>从图库选择图片</h3>
+            <div id="image-picker-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-top:12px;"></div>
+        </div>
+    </div>
+
     <footer>
         <p>&copy; 2023 Aurora的个人博客. 保留所有权利.</p>
     </footer>
@@ -394,6 +427,7 @@
         // --- Globals ---
         let adminPassword = '';
         let articleEditor;
+        let currentImagePickerTarget = null; // 'cover' | 'editor'
         let currentArticlePage = 1;
         let currentMessagePage = 1;
         let currentMessageStatus = 'all';
@@ -478,11 +512,231 @@
             document.getElementById('refresh-articles-btn').addEventListener('click', loadArticles);
             document.getElementById('article-form').addEventListener('submit', submitArticle);
             document.getElementById('cancel-edit-btn').addEventListener('click', () => showArticleListView());
+            // 封面相关事件
+            const chooseBtn = document.getElementById('choose-cover-btn');
+            const fileInput = document.getElementById('cover-file');
+            const urlInput = document.getElementById('article-cover');
+            const preview = document.getElementById('cover-preview');
+            const clearBtn = document.getElementById('clear-cover-btn');
+            const pickGalleryBtn = document.getElementById('pick-cover-gallery-btn');
+            const imagePickerModal = document.getElementById('image-picker-modal');
+            const imagePickerClose = document.getElementById('image-picker-close');
+            const imagePickerGrid = document.getElementById('image-picker-grid');
+
+            chooseBtn.addEventListener('click', () => fileInput.click());
+            clearBtn.addEventListener('click', () => {
+                urlInput.value = '';
+                preview.src = '';
+                preview.style.display = 'none';
+            });
+            urlInput.addEventListener('input', () => {
+                if (urlInput.value) {
+                    preview.src = urlInput.value;
+                    preview.style.display = 'block';
+                }
+            });
+            fileInput.addEventListener('change', async () => {
+                const file = fileInput.files && fileInput.files[0];
+                if (!file) return;
+                try {
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        const base64 = e.target.result;
+                        const res = await axios.post(API_URLS.images, {
+                            action: 'upload',
+                            password: adminPassword,
+                            file: base64,
+                            filename: file.name,
+                            mime: file.type
+                        });
+                        if (res.data && res.data.ok) {
+                            urlInput.value = res.data.data.url;
+                            preview.src = res.data.data.url;
+                            preview.style.display = 'block';
+                            showNotification('封面上传成功', 'success');
+                        } else {
+                            showNotification(res.data.error || '封面上传失败', 'error');
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                } catch (err) {
+                    showNotification('封面上传失败', 'error');
+                }
+            });
+
+            function openImagePickerModal(target = 'cover') {
+                currentImagePickerTarget = target;
+                imagePickerModal.style.display = 'block';
+                imagePickerGrid.innerHTML = '<div style="text-align:center;padding:20px;color:#666;">正在加载图库...</div>';
+                axios.post(API_URLS.images, { action: 'list', password: adminPassword })
+                    .then(res => {
+                        if (res.data && res.data.ok) {
+                            const files = res.data.data || [];
+                            imagePickerGrid.innerHTML = '';
+                            files.forEach(file => {
+                                const card = document.createElement('div');
+                                card.style.border = '1px solid #eee';
+                                card.style.borderRadius = '6px';
+                                card.style.overflow = 'hidden';
+                                card.style.cursor = 'pointer';
+                                card.innerHTML = `
+                                    <img src="${file.url}" alt="${file.originalName}" style="width:100%;height:120px;object-fit:cover;display:block;">
+                                    <div style="padding:8px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${file.originalName}</div>
+                                `;
+                                card.addEventListener('click', () => {
+                                    if (currentImagePickerTarget === 'cover') {
+                                        urlInput.value = file.url;
+                                        preview.src = file.url;
+                                        preview.style.display = 'block';
+                                    } else if (currentImagePickerTarget === 'editor') {
+                                        const cm = articleEditor.codemirror;
+                                        const markdown = `![图片描述](${file.url})`;
+                                        cm.replaceSelection(markdown);
+                                    }
+                                    imagePickerModal.style.display = 'none';
+                                });
+                                imagePickerGrid.appendChild(card);
+                            });
+                            if (files.length === 0) {
+                                imagePickerGrid.innerHTML = '<div style="text-align:center;padding:20px;color:#666;">暂无图片，请先上传</div>';
+                            }
+                        } else {
+                            imagePickerGrid.innerHTML = '<div style="text-align:center;padding:20px;color:#e74c3c;">加载失败</div>';
+                        }
+                    })
+                    .catch(() => imagePickerGrid.innerHTML = '<div style="text-align:center;padding:20px;color:#e74c3c;">加载失败</div>');
+            }
+
+            // 打开封面图库选择
+            pickGalleryBtn.addEventListener('click', () => openImagePickerModal('cover'));
+
+            // 打开图库选择
+            pickGalleryBtn.addEventListener('click', async () => {
+                imagePickerModal.style.display = 'block';
+                imagePickerGrid.innerHTML = '<div style="text-align:center;padding:20px;color:#666;">正在加载图库...</div>';
+                try {
+                    const res = await axios.post(API_URLS.images, { action: 'list', password: adminPassword });
+                    if (res.data && res.data.ok) {
+                        const files = res.data.data || [];
+                        imagePickerGrid.innerHTML = '';
+                        files.forEach(file => {
+                            const card = document.createElement('div');
+                            card.style.border = '1px solid #eee';
+                            card.style.borderRadius = '6px';
+                            card.style.overflow = 'hidden';
+                            card.style.cursor = 'pointer';
+                            card.innerHTML = `
+                                <img src="${file.url}" alt="${file.originalName}" style="width:100%;height:120px;object-fit:cover;display:block;">
+                                <div style="padding:8px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${file.originalName}</div>
+                            `;
+                            card.addEventListener('click', () => {
+                                urlInput.value = file.url;
+                                preview.src = file.url;
+                                preview.style.display = 'block';
+                                imagePickerModal.style.display = 'none';
+                            });
+                            imagePickerGrid.appendChild(card);
+                        });
+                        if (files.length === 0) {
+                            imagePickerGrid.innerHTML = '<div style="text-align:center;padding:20px;color:#666;">暂无图片，请先上传</div>';
+                        }
+                    } else {
+                        imagePickerGrid.innerHTML = '<div style="text-align:center;padding:20px;color:#e74c3c;">加载失败</div>';
+                    }
+                } catch (e) {
+                    imagePickerGrid.innerHTML = '<div style="text-align:center;padding:20px;color:#e74c3c;">加载失败</div>';
+                }
+            });
+
+            // 关闭图库
+            imagePickerClose.addEventListener('click', () => imagePickerModal.style.display = 'none');
+            window.addEventListener('click', (e) => { if (e.target === imagePickerModal) imagePickerModal.style.display = 'none'; });
         }
 
         function initArticleEditor() {
-             if (!articleEditor) {
-                articleEditor = new SimpleMDE({ element: document.getElementById("article-content-editor") });
+            if (!articleEditor) {
+                articleEditor = new SimpleMDE({
+                    element: document.getElementById('article-content-editor'),
+                    spellChecker: false,
+                    status: false,
+                    autosave: {
+                        enabled: true,
+                        uniqueId: 'blog-article-editor',
+                        delay: 1000
+                    },
+                    renderingConfig: {
+                        singleLineBreaks: false
+                    },
+                    previewRender: function(plainText) {
+                        // 支持代码高亮、KaTeX 与 Mermaid 预览
+                        const html = marked.parse(plainText);
+                        const wrapper = document.createElement('div');
+                        wrapper.innerHTML = html;
+                        // 代码高亮
+                        wrapper.querySelectorAll('pre code').forEach((block) => {
+                            try { hljs.highlightElement(block); } catch (e) {}
+                        });
+                        // KaTeX 公式渲染（$...$ 和 $$...$$）
+                        try {
+                            renderMathInElement(wrapper, {
+                                delimiters: [
+                                    { left: '$$', right: '$$', display: true },
+                                    { left: '$', right: '$', display: false },
+                                    { left: '\\(', right: '\\)', display: false },
+                                    { left: '\\[', right: '\\]', display: true }
+                                ]
+                            });
+                        } catch (e) {}
+                        // Mermaid 代码块转渲染
+                        try {
+                            const mermaidBlocks = wrapper.querySelectorAll('code.language-mermaid');
+                            mermaidBlocks.forEach((codeEl, idx) => {
+                                const container = document.createElement('div');
+                                container.className = 'mermaid';
+                                container.textContent = codeEl.textContent;
+                                const pre = codeEl.closest('pre');
+                                if (pre) pre.replaceWith(container);
+                            });
+                            mermaid.initialize({ startOnLoad: false, securityLevel: 'loose' });
+                            mermaid.run({ nodes: wrapper.querySelectorAll('.mermaid') });
+                        } catch (e) {}
+                        return wrapper.innerHTML;
+                    },
+                    toolbar: [
+                        'bold','italic','strikethrough','heading','|',
+                        'quote','code','table','unordered-list','ordered-list','|',
+                        {
+                            name: 'mermaid',
+                            action: function customMermaid(editor) {
+                                const cm = editor.codemirror;
+                                const tpl = '\n```mermaid\nflowchart TD\n  A[开始] --> B[处理] --> C{判断?}\n  C -- 是 --> D[结束]\n  C -- 否 --> B\n```\n';
+                                cm.replaceSelection(tpl);
+                            },
+                            className: 'fa fa-project-diagram',
+                            title: '插入Mermaid图表'
+                        },
+                        {
+                            name: 'katex',
+                            action: function customKatex(editor) {
+                                const cm = editor.codemirror;
+                                const tpl = '$$ a^2 + b^2 = c^2 $$';
+                                cm.replaceSelection(tpl);
+                            },
+                            className: 'fa fa-superscript',
+                            title: '插入公式(KaTeX)'
+                        },
+                        {
+                            name: 'imagePicker',
+                            action: function openImagePicker(editor) {
+                                currentImagePickerTarget = 'editor';
+                                openImagePickerModal();
+                            },
+                            className: 'fa fa-images',
+                            title: '从图库插入图片'
+                        },
+                        '|','link','image','horizontal-rule','preview','side-by-side','fullscreen'
+                    ]
+                });
             }
         }
 
@@ -527,6 +781,17 @@
                 document.getElementById('article-title').value = article.title;
                 document.getElementById('article-category').value = article.category;
                 articleEditor.value(article.content);
+                // 封面
+                const cover = document.getElementById('article-cover');
+                const preview = document.getElementById('cover-preview');
+                cover.value = article.coverImage || '';
+                if (article.coverImage) {
+                    preview.src = article.coverImage;
+                    preview.style.display = 'block';
+                } else {
+                    preview.src = '';
+                    preview.style.display = 'none';
+                }
                 // Tags would need more complex handling
             }
         }
@@ -543,6 +808,7 @@
                 title: document.getElementById('article-title').value,
                 category: document.getElementById('article-category').value,
                 content: articleEditor.value(),
+                coverImage: document.getElementById('article-cover').value || undefined,
                 tags: [] // Simplified
             };
 

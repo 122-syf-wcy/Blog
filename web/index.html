@@ -352,9 +352,7 @@
 
     <footer>
         <div class="social-links">
-            <a href="#"><i class="fab fa-github"></i></a>
-            <a href="#"><i class="fab fa-weixin"></i></a>
-            <a href="#"><i class="fab fa-qq"></i></a>
+            <a href="https://github.com/122-syf-wcy" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><i class="fab fa-github"></i></a>
         </div>
         <p>&copy; 2025 Aurora的个人博客. 保留所有权利。</p>
     </footer>
@@ -496,40 +494,27 @@
                     excerpt = excerpt.substring(0, 100) + '...';
                 }
 
-                            // 获取封面图片URL
-            let coverImage = 'images/post-default.jpg'; // 默认封面图
-            let coverImageType = 'normal'; // 图片类型：normal 或 dataURL
+            // 优先使用文章的显式封面字段，否则从内容中提取
+            let coverImage = article.coverImage || 'images/post-default.jpg';
+            let coverImageType = 'normal';
 
             try {
-                if (article.content) {
-                    // 检查内容是否为字符串
-                    const content = typeof article.content === 'string' 
-                        ? article.content 
-                        : String(article.content || '');
-                        
-                    // 安全提取图片URL
+                if (!article.coverImage && article.content) {
+                    const content = typeof article.content === 'string' ? article.content : String(article.content || '');
                     const extractedImg = extractCoverImageFromContent(content);
-                    
                     if (extractedImg) {
-                        // 检查是否是本地文件路径，如果是就使用默认图片
                         if (extractedImg.startsWith('file://') || extractedImg.match(/^[a-zA-Z]:\\/)) {
-                            // 使用默认图片
-                        } 
-                        // 处理Data URL
-                        else if (extractedImg.startsWith('data:')) {
+                            // ignore local file
+                        } else if (extractedImg.startsWith('data:')) {
                             try {
                                 coverImageType = 'dataURL';
-                                // 创建一个临时元素来存储编码后的图片URL
                                 const tempImg = document.createElement('img');
                                 tempImg.style.display = 'none';
                                 tempImg.src = extractedImg;
                                 document.body.appendChild(tempImg);
-    
-                                // 获取对图片的引用，稍后我们会使用它
                                 coverImage = tempImg;
                             } catch (imgErr) {
                                 console.error('处理Data URL图片失败:', imgErr);
-                                // 失败时使用默认图片
                             }
                         } else {
                             coverImage = extractedImg;
@@ -538,7 +523,6 @@
                 }
             } catch (error) {
                 console.error('获取文章封面图片时出错:', error);
-                // 使用默认图片
             }
 
                 // 创建文章卡片的HTML
